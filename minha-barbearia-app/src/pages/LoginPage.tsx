@@ -1,43 +1,81 @@
 // src/pages/LoginPage.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/mockApiService';
+import { useNavigate, Link } from 'react-router-dom';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('barbeiro@teste.com');
   const [password, setPassword] = useState('1234');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    try {
-      const response = await authService.login(email, password);
-      // Lógica de Autenticação (vamos melhorar no próximo passo)
-      console.log('Login bem-sucedido!', response);
-      alert('Login feito com sucesso!');
-      navigate('/servicos'); // Redireciona para a área logada
-    } catch (err: any) {
-      setError(err.message);
-    }
+    // Por enquanto, sem autenticação: navegar direto
+    navigate('/servicos');
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">Email:</label>
-          <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+    <div
+      className="min-h-screen flex items-start justify-center pt-10 pb-12 px-4 sm:px-6 lg:px-8"
+      style={{
+        backgroundImage: "url('/src/assets/background-simples.png')",
+        backgroundRepeat: 'repeat',
+        backgroundSize: 'auto',
+        backgroundColor: 'hsl(var(--color-bg-primary))',
+      }}
+    >
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+                     <img 
+             className="mx-auto h-24 w-auto"
+             src="/src/assets/Logo - Barbeiro Inteligente - Sem Fundo.png" 
+             alt="Logo" 
+             onError={(e) => {
+               e.currentTarget.style.display = 'none';
+             }}
+           />
+          <h2 className="mt-6 text-3xl font-extrabold text-text-primary">
+            Entre na sua conta
+          </h2>
+          <p className="mt-2 text-sm text-text-muted">
+            Ou{' '}
+            <Link to="/cadastro" className="font-medium text-primary hover:text-primary/80">
+              crie uma nova conta
+            </Link>
+          </p>
         </div>
-        <div>
-          <label htmlFor="password">Senha:</label>
-          <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit">Entrar</button>
-      </form>
+
+        <Card className="bg-bg-secondary text-text-secondary border border-border">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Input
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              required
+              id="email"
+            />
+
+            <Input
+              label="Senha"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              required
+              id="password"
+            />
+
+            <Button
+              type="submit"
+              className="w-full"
+            >
+              Entrar
+            </Button>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 };

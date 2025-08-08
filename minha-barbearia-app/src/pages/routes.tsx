@@ -1,28 +1,26 @@
 // src/routes.tsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-// Importe as novas páginas que você criou
+// Páginas
 import LoginPage from '../pages/LoginPage';
-import CadastroPage from '../pages/CadastroPage'; // <-- NOVA
-import ServicosPage from '../pages/ServicosPage'; // <-- NOVA
-import AgendaPage from '../pages/AgendaPage';   // <-- NOVA
+import CadastroPage from '../pages/CadastroPage';
+import ServicosPage from '../pages/ServicosPage';
+import AgendaPage from '../pages/AgendaPage';
+import BarbeirosPage from '../pages/BarbeirosPage';
 
 export const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rotas Públicas */}
+        {/* Rotas Públicas (sem proteção por enquanto) */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/cadastro" element={<CadastroPage />} /> {/* <-- NOVA */}
+        <Route path="/cadastro" element={<CadastroPage />} />
+        <Route path="/servicos" element={<ServicosPage />} />
+        <Route path="/barbeiros" element={<BarbeirosPage />} />
+        <Route path="/agenda" element={<AgendaPage />} />
 
-        {/* Rotas da Área Logada (vamos proteger depois) */}
-        {/* O ideal é ter um layout para a área logada, mas por enquanto vamos simplificar */}
-        <Route path="/servicos" element={<ServicosPage />} /> {/* <-- NOVA */}
-        <Route path="/agenda" element={<AgendaPage />} />   {/* <-- NOVA */}
-
-        {/* Rota inicial (pode redirecionar para o login ou para o dashboard) */}
+        {/* Rota inicial */}
         <Route path="/" element={<LoginPage />} />
-
       </Routes>
     </BrowserRouter>
   );

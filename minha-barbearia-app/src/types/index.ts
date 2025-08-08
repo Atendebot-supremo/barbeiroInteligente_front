@@ -35,3 +35,20 @@ export interface Barbearia {
     phone?: string;
     status: StatusBarbearia;
 }
+
+// Profissional/barbeiro
+export interface Barbeiro {
+  idBarber: string;
+  name: string;
+  phone?: string;
+}
+
+// Combos de serviços (para exibir e persistir no front)
+export interface Combo {
+  idCombo: string;
+  idBarber: string; // combos por barbeiro
+  name: string;
+  itemProductIds: string[]; // IDs de serviços inclusos
+  price: number;
+  desc?: string;
+}
