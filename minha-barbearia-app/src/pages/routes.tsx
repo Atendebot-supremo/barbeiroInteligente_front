@@ -1,5 +1,5 @@
 // src/routes.tsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 
 // Páginas
 import LoginPage from '../pages/LoginPage';
@@ -10,18 +10,16 @@ import BarbeirosPage from '../pages/BarbeirosPage';
 
 export const AppRoutes = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Rotas Públicas (sem proteção por enquanto) */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/cadastro" element={<CadastroPage />} />
-        <Route path="/servicos" element={<ServicosPage />} />
-        <Route path="/barbeiros" element={<BarbeirosPage />} />
-        <Route path="/agenda" element={<AgendaPage />} />
+    <Routes>
+      {/* Rotas Públicas (sem proteção por enquanto) */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/cadastro" element={<CadastroPage />} />
+      <Route path="/servicos" element={<ServicosPage />} />
+      <Route path="/barbeiros" element={<BarbeirosPage />} />
+      <Route path="/agenda" element={<AgendaPage />} />
 
-        {/* Rota inicial */}
-        <Route path="/" element={<LoginPage />} />
-      </Routes>
-    </BrowserRouter>
+      {/* Rota inicial */}
+      <Route path="/" element={<LoginPage />} />
+    </Routes>
   );
 };
