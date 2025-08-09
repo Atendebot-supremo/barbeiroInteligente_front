@@ -340,27 +340,12 @@ export const scheduleService = {
 
 // --- SERVIÇO DE AGENDAMENTOS ---
 export const appointmentService = {
-  // Listar todos os agendamentos
-  getAll: async (filters?: { 
-    idBarbershop?: string; 
-    idBarber?: string; 
-    status?: string;
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<BarberAppointment[]> => {
-    const params = new URLSearchParams();
-    if (filters?.idBarbershop) params.append('idBarbershop', filters.idBarbershop);
-    if (filters?.idBarber) params.append('idBarber', filters.idBarber);
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.startDate) params.append('startDate', filters.startDate);
-    if (filters?.endDate) params.append('endDate', filters.endDate);
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-    
-    const response = await api.get(`/barber-appointments?${params.toString()}`);
-    return response.data;
+  // Buscar agendamentos de um barbeiro específico
+  getByBarber: async (barberId: string): Promise<BarberAppointment[]> => {
+    const response = await api.get(`/barbers/${barberId}/appointments`);
+    // A API pode retornar { data: [...] } ou diretamente [...]
+    const data = response.data?.data || response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   // Buscar agendamento por ID
@@ -370,13 +355,26 @@ export const appointmentService = {
   },
 
   // Criar novo agendamento
-  create: async (data: Partial<BarberAppointment>): Promise<BarberAppointment> => {
+  create: async (data: {
+    idBarbershop: string;
+    idBarber: string;
+    idProduct: string;
+    clientName: string;
+    clientPhone: string;
+    startOfSchedule: string; // timestamp em formato ISO com timezone Brasil
+    status: string;
+  }): Promise<BarberAppointment> => {
     const response = await api.post('/barber-appointments', data);
     return response.data;
   },
 
   // Atualizar agendamento
-  update: async (id: string, data: Partial<BarberAppointment>): Promise<BarberAppointment> => {
+  update: async (id: string, data: {
+    clientName?: string;
+    clientPhone?: string;
+    startOfSchedule?: string; // formato HH:mm ou timestamp completo
+    status?: string;
+  }): Promise<BarberAppointment> => {
     const response = await api.put(`/barber-appointments/${id}`, data);
     return response.data;
   },
@@ -421,25 +419,10 @@ export const dataService = {
   },
 
   // Adapta os agendamentos para o formato esperado pelo frontend
+  // Função obsoleta - use appointmentService.getByBarber() diretamente
   getAgendaEvents: async (): Promise<Agendamento[]> => {
-    try {
-      const appointments = await appointmentService.getAll();
-      return appointments.map(appointment => ({
-        idAppointment: appointment.id || '',
-        idBarbershop: appointment.idBarbershop,
-        idBarber: appointment.idBarber,
-        idProduct: appointment.idProduct,
-        clientName: appointment.clientName,
-        clientPhone: appointment.clientPhone,
-        createdAt: appointment.createdAt || new Date().toISOString(),
-        updatedAt: appointment.updatedAt || new Date().toISOString(),
-        status: appointment.status === 'completed' ? 'Concluido' : 
-                appointment.status === 'cancelled' ? 'Cancelado' : 'Agendado',
-      }));
-    } catch (error) {
-      console.warn('Erro ao carregar agendamentos da API, usando dados locais:', error);
-      return [];
-    }
+    console.warn('getAgendaEvents() está obsoleto, use appointmentService.getByBarber()');
+    return [];
   },
 };
 

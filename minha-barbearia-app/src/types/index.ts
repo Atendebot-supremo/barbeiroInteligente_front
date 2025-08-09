@@ -24,6 +24,7 @@ export interface Agendamento {
   clientPhone?: string;   // TEXT (opcional)
   createdAt: string;      // TIMESTAMPTZ
   updatedAt: string;      // TIMESTAMPTZ
+  startOfSchedule?: string; // TIMESTAMPTZ - data/hora do agendamento
   status: StatusAgendamento;
 }
 
