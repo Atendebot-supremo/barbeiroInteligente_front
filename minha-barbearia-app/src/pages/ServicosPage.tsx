@@ -309,7 +309,6 @@ const ServicosPage = () => {
           <h1 className="text-3xl font-bold text-text-primary">Serviços</h1>
           <div className="flex items-center gap-3">
             <div>
-              <label htmlFor="barber" className="block text-sm font-medium text-text-secondary mb-1">Barbeiro</label>
               <select
                 id="barber"
                 value={selectedBarberId}

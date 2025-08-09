@@ -17,6 +17,7 @@ const AgendaPage: React.FC = () => {
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
   const calendarRef = useRef<FullCalendar | null>(null);
   const [events, setEvents] = useState<any[]>([]);
+  const [calendarView, setCalendarView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('timeGridWeek');
 
   // Modal de evento
   const [eventModalOpen, setEventModalOpen] = useState(false);
@@ -188,16 +189,28 @@ const AgendaPage: React.FC = () => {
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-text-primary">Agenda (Semanal)</h1>
-            <p className="text-text-muted text-sm">{selectedBarberId ? `Barbeiro: ${barbers.find(b => b.idBarber === selectedBarberId)?.name ?? ''}` : 'Geral'}</p>
+            <h1 className="text-3xl font-bold text-text-primary">
+              Agenda ({
+                calendarView === 'dayGridMonth' ? 'Mensal' :
+                calendarView === 'timeGridWeek' ? 'Semanal' :
+                'Diário'
+              })
+            </h1>
           </div>
           <div className="flex items-end gap-4">
             <div>
-              <label htmlFor="barber" className="block text-sm font-medium text-text-secondary mb-1">Barbeiro</label>
+              
               <select
                 id="barber"
                 value={selectedBarberId}
-                onChange={(e) => setSelectedBarberId(e.target.value)}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setSelectedBarberId(newValue);
+                  // Força re-renderização do calendário
+                  setTimeout(() => {
+                    calendarRef.current?.getApi().refetchEvents();
+                  }, 100);
+                }}
                 className="w-56 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary border-border bg-white"
               >
                 <option value="">Geral</option>
@@ -230,9 +243,10 @@ const AgendaPage: React.FC = () => {
         {/* FullCalendar (protótipo) */}
         <div className="bg-bg-secondary border border-border rounded-lg overflow-hidden">
           <FullCalendar
+            key={`calendar-${selectedBarberId || 'all'}-${calendarView}`}
             ref={calendarRef as any}
             plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
+            initialView={calendarView}
             locales={[ptBrLocale]}
             locale="pt-br"
             allDaySlot={false}
@@ -246,14 +260,59 @@ const AgendaPage: React.FC = () => {
             editable={false}
             weekends={true}
             events={useMemo(() => {
-              const src = selectedBarberId
-                ? events.filter(ev => ev.extendedProps?.barberId === selectedBarberId)
-                : events;
-              return src;
+              if (!selectedBarberId || selectedBarberId === '') {
+                return events;
+              }
+              
+              return events.filter(ev => {
+                const barberId = ev.extendedProps?.barberId;
+                return barberId === selectedBarberId;
+              });
             }, [events, selectedBarberId])}
             select={handleSelect}
             eventClick={handleEventClick}
           />
+        </div>
+
+        {/* Seletor de visualização */}
+        <div className="flex justify-center">
+          <div className="bg-bg-secondary border border-border rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <span className="text-sm font-medium text-text-secondary">Visualização:</span>
+              <div className="flex gap-2">
+                <Button
+                  variant={calendarView === 'dayGridMonth' ? 'primary' : 'outline'}
+                  onClick={() => {
+                    setCalendarView('dayGridMonth');
+                    calendarRef.current?.getApi().changeView('dayGridMonth');
+                  }}
+                  className="px-4 py-2"
+                >
+                  Mensal
+                </Button>
+                <Button
+                  variant={calendarView === 'timeGridWeek' ? 'primary' : 'outline'}
+                  onClick={() => {
+                    setCalendarView('timeGridWeek');
+                    calendarRef.current?.getApi().changeView('timeGridWeek');
+                  }}
+                  className="px-4 py-2"
+                >
+                  Semanal
+                </Button>
+                <Button
+                  variant={calendarView === 'timeGridDay' ? 'primary' : 'outline'}
+                  onClick={() => {
+                    setCalendarView('timeGridDay');
+                    calendarRef.current?.getApi().changeView('timeGridDay');
+                  }}
+                  className="px-4 py-2"
+                >
+                  Diário
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

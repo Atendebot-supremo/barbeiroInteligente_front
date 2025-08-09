@@ -1,18 +1,21 @@
 // src/App.tsx
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from './pages/routes';
-import { SimpleNavbar } from './components/layout';
+import { Header } from './components/layout';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen flex flex-col">
-        <SimpleNavbar />
-        <div className="flex-1">
-          <AppRoutes />
+    <AuthProvider>
+      <BrowserRouter>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <div className="flex-1">
+            <AppRoutes />
+          </div>
         </div>
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

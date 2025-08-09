@@ -12,6 +12,8 @@
   /* Texto Principal (use a primeira opção por padrão) */
   --color-text-primary: 210 40% 98%; /* stone-100 -> #f1f5f9 */
 
+  --color-text-primary-dark: rgba(0, 0, 0, 0.5);
+
   /* Fundo Secundário */
   --color-bg-secondary: 60 5% 96%; /* stone-50 -> #fafaf9 */
 

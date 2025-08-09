@@ -17,7 +17,7 @@ const Modal: React.FC<ModalProps> = ({ open, title, onClose, children, footer })
         <div className="bg-bg-secondary text-text-secondary border border-border rounded-lg shadow-xl">
           {title && (
             <div className="px-5 py-4 border-b border-border">
-              <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
+              <h3 className="text-lg font-semibold text-text-primary-dark">{title}</h3>
             </div>
           )}
           <div className="px-5 py-4">
