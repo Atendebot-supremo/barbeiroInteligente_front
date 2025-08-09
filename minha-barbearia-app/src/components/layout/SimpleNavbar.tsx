@@ -24,6 +24,7 @@ const SimpleNavbar: React.FC = () => {
           <Link to="/agenda" className={linkClass('/agenda')}>Agenda</Link>
           <Link to="/servicos" className={linkClass('/servicos')}>Serviços</Link>
           <Link to="/barbeiros" className={linkClass('/barbeiros')}>Barbeiros</Link>
+          <Link to="/test-api" className={linkClass('/test-api')}>Teste API</Link>
           <Link to="/dashboard" className={linkClass('/dashboard')}>Dashboard</Link>
         </div>
       </div>

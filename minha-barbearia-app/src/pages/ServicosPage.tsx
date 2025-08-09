@@ -1,6 +1,6 @@
 // src/pages/ServicosPage.tsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { dataService } from '../services/mockApiService';
+import { dataService, productService, barberService } from '../services/realApiService';
 import type { Servico, Combo, Barbeiro } from '../types';
 import { Button, Card, Loading, Modal, Input } from '../components/ui';
 import { formatCurrency, formatDuration } from '../utils/format';
@@ -16,39 +16,56 @@ const ServicosPage = () => {
   const combosCarouselRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // Carregar do localStorage; se vazio, seed com mock
-    // Barbeiros
-    const storedBarbers = loadBarbers();
-    if (storedBarbers.length > 0) {
-      setBarbers(storedBarbers);
-    } else {
-      const seeded = [
-        { idBarber: 'uuid-barber-1', name: 'João' },
-        { idBarber: 'uuid-barber-2', name: 'Carlos' },
-      ];
-      setBarbers(seeded);
-      saveBarbers(seeded);
-    }
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Carregar barbeiros da API
+        const barbersFromApi = await barberService.getAll();
+        const barbeirosFormatted: Barbeiro[] = barbersFromApi.map(barber => ({
+          idBarber: barber.id || '',
+          name: barber.name,
+          phone: undefined, // API não retorna phone para barbeiros
+        }));
+        setBarbers(barbeirosFormatted);
+        saveBarbers(barbeirosFormatted);
 
-    const storedServices = loadServices();
-    const storedCombos = loadCombos();
-    if (storedServices.length > 0) {
-      setServices(storedServices);
-      setCombos(storedCombos);
-    } else {
-      (async () => {
-        try {
-          const mock = await dataService.getServices();
-          setServices(mock);
-          saveServices(mock);
-          setCombos([]);
-          saveCombos([]);
-        } catch (e) {
-          console.error('Erro ao buscar serviços:', e);
+        // Carregar serviços da API
+        const servicesFromApi = await dataService.getServices();
+        setServices(servicesFromApi);
+        saveServices(servicesFromApi);
+
+        // Carregar combos do localStorage (já que não há API para combos ainda)
+        const storedCombos = loadCombos();
+        setCombos(storedCombos);
+
+      } catch (error) {
+        console.error('Erro ao carregar dados da API:', error);
+        
+        // Fallback para dados locais se a API falhar
+        const storedBarbers = loadBarbers();
+        const storedServices = loadServices();
+        const storedCombos = loadCombos();
+        
+        if (storedBarbers.length > 0) setBarbers(storedBarbers);
+        if (storedServices.length > 0) setServices(storedServices);
+        setCombos(storedCombos);
+        
+        // Se não há dados locais, criar dados básicos
+        if (storedBarbers.length === 0) {
+          const defaultBarbers = [
+            { idBarber: 'uuid-barber-1', name: 'João' },
+            { idBarber: 'uuid-barber-2', name: 'Carlos' },
+          ];
+          setBarbers(defaultBarbers);
+          saveBarbers(defaultBarbers);
         }
-      })();
-    }
-    setLoading(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   const scrollCarouselBy = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
@@ -87,36 +104,64 @@ const ServicosPage = () => {
     setServiceModalOpen(true);
   };
 
-  const submitServiceForm: React.FormEventHandler<HTMLFormElement> = (e) => {
+  const submitServiceForm: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    const id = editingServiceId ?? (crypto.randomUUID ? crypto.randomUUID() : `svc-${Date.now()}`);
-    const barberId = serviceBarberId || selectedBarberId || barbers[0]?.idBarber || 'uuid-barber-1';
-    const newService: Servico = {
-      idProduct: id,
-      idBarber: barberId,
-      name: serviceName.trim(),
-      price: Number(servicePrice) || 0,
-      desc: serviceDesc.trim() || undefined,
-      duration: Number(serviceDuration) || 30,
-    };
-    let updated: Servico[];
-    if (editingServiceId) {
-      updated = services.map(s => (s.idProduct === editingServiceId ? newService : s));
-    } else {
-      updated = [newService, ...services];
+    try {
+      const barberId = serviceBarberId || selectedBarberId || barbers[0]?.idBarber || 'uuid-barber-1';
+      const serviceData = {
+        name: serviceName.trim(),
+        price: Number(servicePrice) || 0,
+        desc: serviceDesc.trim() || undefined,
+        duration: Number(serviceDuration) || 30,
+        idBarber: barberId,
+      };
+
+      let updatedService: any;
+      if (editingServiceId) {
+        // Atualizar serviço existente
+        updatedService = await productService.update(editingServiceId, serviceData);
+      } else {
+        // Criar novo serviço
+        updatedService = await productService.create(serviceData);
+      }
+
+      // Converter para formato esperado pelo frontend
+      const formattedService: Servico = {
+        idProduct: updatedService.id || updatedService.idProduct,
+        idBarber: updatedService.idBarber,
+        name: updatedService.name,
+        price: updatedService.price,
+        desc: updatedService.desc,
+        duration: updatedService.duration,
+      };
+
+      // Atualizar lista local
+      let updated: Servico[];
+      if (editingServiceId) {
+        updated = services.map(s => (s.idProduct === editingServiceId ? formattedService : s));
+      } else {
+        updated = [formattedService, ...services];
+      }
+      
+      setServices(updated);
+      saveServices(updated);
+      
+      // Atualizar combos que referenciam serviços inexistentes
+      const svcIds = new Set(updated.map(s => s.idProduct));
+      const cleanedCombos = combos
+        .map(c => ({ ...c, itemProductIds: c.itemProductIds.filter(idp => svcIds.has(idp)) }))
+        .filter(c => c.itemProductIds.length > 0);
+      if (cleanedCombos.length !== combos.length) {
+        setCombos(cleanedCombos);
+        saveCombos(cleanedCombos);
+      }
+      
+      setServiceModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao salvar serviço:', error);
+      // TODO: Mostrar erro para o usuário
+      alert('Erro ao salvar serviço. Tente novamente.');
     }
-    setServices(updated);
-    saveServices(updated);
-    // Atualizar combos que referenciam serviços inexistentes
-    const svcIds = new Set(updated.map(s => s.idProduct));
-    const cleanedCombos = combos
-      .map(c => ({ ...c, itemProductIds: c.itemProductIds.filter(idp => svcIds.has(idp)) }))
-      .filter(c => c.itemProductIds.length > 0);
-    if (cleanedCombos.length !== combos.length) {
-      setCombos(cleanedCombos);
-      saveCombos(cleanedCombos);
-    }
-    setServiceModalOpen(false);
   };
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -125,20 +170,31 @@ const ServicosPage = () => {
     setDeletingServiceId(id);
     setConfirmDeleteOpen(true);
   };
-  const confirmDeleteService = () => {
+  const confirmDeleteService = async () => {
     if (!deletingServiceId) return;
-    const updated = services.filter(s => s.idProduct !== deletingServiceId);
-    setServices(updated);
-    saveServices(updated);
-    // Limpar combos que perderam itens
-    const svcIds = new Set(updated.map(s => s.idProduct));
-    const cleanedCombos = combos
-      .map(c => ({ ...c, itemProductIds: c.itemProductIds.filter(idp => svcIds.has(idp)) }))
-      .filter(c => c.itemProductIds.length > 0);
-    setCombos(cleanedCombos);
-    saveCombos(cleanedCombos);
-    setDeletingServiceId(null);
-    setConfirmDeleteOpen(false);
+    try {
+      // Deletar da API
+      await productService.delete(deletingServiceId);
+      
+      // Atualizar lista local
+      const updated = services.filter(s => s.idProduct !== deletingServiceId);
+      setServices(updated);
+      saveServices(updated);
+      
+      // Limpar combos que perderam itens
+      const svcIds = new Set(updated.map(s => s.idProduct));
+      const cleanedCombos = combos
+        .map(c => ({ ...c, itemProductIds: c.itemProductIds.filter(idp => svcIds.has(idp)) }))
+        .filter(c => c.itemProductIds.length > 0);
+      setCombos(cleanedCombos);
+      saveCombos(cleanedCombos);
+      
+      setDeletingServiceId(null);
+      setConfirmDeleteOpen(false);
+    } catch (error) {
+      console.error('Erro ao excluir serviço:', error);
+      alert('Erro ao excluir serviço. Tente novamente.');
+    }
   };
 
   // ---------- CRUD - Combos ----------

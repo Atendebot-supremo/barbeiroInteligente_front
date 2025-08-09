@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
 import type { Barbeiro, Servico, Combo } from '../types';
 import { loadBarbers, saveBarbers, loadServices, saveServices, loadCombos, saveCombos } from '../services/localStore';
+import { barberService, productService } from '../services/realApiService';
 
 const BarbeirosPage: React.FC = () => {
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
@@ -11,13 +12,54 @@ const BarbeirosPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const b = loadBarbers();
-    const s = loadServices();
-    const c = loadCombos();
-    setBarbers(b);
-    setServices(s);
-    setCombos(c);
-    setLoading(false);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Carregar barbeiros da API
+        const barbersFromApi = await barberService.getAll();
+        const barbeirosFormatted: Barbeiro[] = barbersFromApi.map(barber => ({
+          idBarber: barber.id || '',
+          name: barber.name,
+          phone: undefined, // API não retorna phone para barbeiros
+        }));
+        setBarbers(barbeirosFormatted);
+        saveBarbers(barbeirosFormatted);
+
+        // Carregar serviços para contagem
+        const productsFromApi = await productService.getAll();
+        const servicesFormatted: Servico[] = productsFromApi.map(product => ({
+          idProduct: product.id || '',
+          idBarber: product.idBarber,
+          name: product.name,
+          price: product.price,
+          desc: product.desc,
+          duration: product.duration || 30,
+        }));
+        setServices(servicesFormatted);
+        saveServices(servicesFormatted);
+
+        // Carregar combos do localStorage
+        const storedCombos = loadCombos();
+        setCombos(storedCombos);
+
+      } catch (error) {
+        console.error('Erro ao carregar dados da API:', error);
+        
+        // Fallback para dados locais
+        const storedBarbers = loadBarbers();
+        const storedServices = loadServices();
+        const storedCombos = loadCombos();
+        
+        setBarbers(storedBarbers);
+        setServices(storedServices);
+        setCombos(storedCombos);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   const countsByBarber = useMemo(() => {
@@ -36,30 +78,78 @@ const BarbeirosPage: React.FC = () => {
   const [barberModalOpen, setBarberModalOpen] = useState(false);
   const [editingBarberId, setEditingBarberId] = useState<string | null>(null);
   const [barberName, setBarberName] = useState('');
-  const [barberPhone, setBarberPhone] = useState('');
 
   const openAddBarber = () => {
     setEditingBarberId(null);
     setBarberName('');
-    setBarberPhone('');
     setBarberModalOpen(true);
   };
   const openEditBarber = (barber: Barbeiro) => {
     setEditingBarberId(barber.idBarber);
     setBarberName(barber.name);
-    setBarberPhone(barber.phone || '');
     setBarberModalOpen(true);
   };
-  const submitBarberForm: React.FormEventHandler<HTMLFormElement> = (e) => {
+  const submitBarberForm: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    const id = editingBarberId ?? (crypto.randomUUID ? crypto.randomUUID() : `bar-${Date.now()}`);
-    const newBarber: Barbeiro = { idBarber: id, name: barberName.trim(), phone: barberPhone.trim() || undefined };
-    const updated = editingBarberId
-      ? barbers.map(b => (b.idBarber === editingBarberId ? newBarber : b))
-      : [newBarber, ...barbers];
-    setBarbers(updated);
-    saveBarbers(updated);
-    setBarberModalOpen(false);
+    try {
+      // Primeiro, vamos tentar obter as barbearias para pegar um ID válido
+      let validBarbershopId = null;
+      
+      try {
+        const { barbershopService } = await import('../services/realApiService');
+        console.log('Buscando barbearias existentes...');
+        const barbershops = await barbershopService.getAll();
+        console.log('Barbearias encontradas:', barbershops);
+        
+        if (barbershops && barbershops.length > 0) {
+          validBarbershopId = barbershops[0].id;
+          console.log('Usando idBarbershop:', validBarbershopId);
+        }
+      } catch (error) {
+        console.warn('Não foi possível obter barbershops:', error);
+      }
+      
+      // Se não temos um ID válido, mostrar erro para o usuário
+      if (!validBarbershopId) {
+        alert('❌ Erro: É necessário ter pelo menos uma barbearia cadastrada antes de criar barbeiros.\n\nVá para a página de teste (/test-api) e execute "Barbershops - Criar Teste" primeiro.');
+        return;
+      }
+
+      const barberData = {
+        name: barberName.trim(),
+        idBarbershop: validBarbershopId,
+      };
+      
+      console.log('Enviando dados do barbeiro:', barberData);
+
+      let updatedBarber: any;
+      if (editingBarberId) {
+        // Atualizar barbeiro existente
+        updatedBarber = await barberService.update(editingBarberId, barberData);
+      } else {
+        // Criar novo barbeiro
+        updatedBarber = await barberService.create(barberData);
+      }
+
+      // Converter para formato esperado pelo frontend
+      const formattedBarber: Barbeiro = {
+        idBarber: updatedBarber.id || editingBarberId || '',
+        name: updatedBarber.name,
+        phone: undefined, // API não retorna phone para barbeiros
+      };
+
+      // Atualizar lista local
+      const updated = editingBarberId
+        ? barbers.map(b => (b.idBarber === editingBarberId ? formattedBarber : b))
+        : [formattedBarber, ...barbers];
+      
+      setBarbers(updated);
+      saveBarbers(updated);
+      setBarberModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao salvar barbeiro:', error);
+      alert('Erro ao salvar barbeiro. Tente novamente.');
+    }
   };
 
   // Excluir barbeiro (e dados associados)
@@ -69,19 +159,30 @@ const BarbeirosPage: React.FC = () => {
     setDeletingBarberId(id);
     setConfirmDeleteOpen(true);
   };
-  const confirmDeleteBarber = () => {
+  const confirmDeleteBarber = async () => {
     if (!deletingBarberId) return;
-    const updatedBarbers = barbers.filter(b => b.idBarber !== deletingBarberId);
-    const updatedServices = services.filter(s => s.idBarber !== deletingBarberId);
-    const updatedCombos = combos.filter(c => c.idBarber !== deletingBarberId);
-    setBarbers(updatedBarbers);
-    setServices(updatedServices);
-    setCombos(updatedCombos);
-    saveBarbers(updatedBarbers);
-    saveServices(updatedServices);
-    saveCombos(updatedCombos);
-    setDeletingBarberId(null);
-    setConfirmDeleteOpen(false);
+    try {
+      // Deletar da API
+      await barberService.delete(deletingBarberId);
+      
+      // Atualizar listas locais
+      const updatedBarbers = barbers.filter(b => b.idBarber !== deletingBarberId);
+      const updatedServices = services.filter(s => s.idBarber !== deletingBarberId);
+      const updatedCombos = combos.filter(c => c.idBarber !== deletingBarberId);
+      
+      setBarbers(updatedBarbers);
+      setServices(updatedServices);
+      setCombos(updatedCombos);
+      saveBarbers(updatedBarbers);
+      saveServices(updatedServices);
+      saveCombos(updatedCombos);
+      
+      setDeletingBarberId(null);
+      setConfirmDeleteOpen(false);
+    } catch (error) {
+      console.error('Erro ao excluir barbeiro:', error);
+      alert('Erro ao excluir barbeiro. Tente novamente.');
+    }
   };
 
   if (loading) {
@@ -107,7 +208,7 @@ const BarbeirosPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {barbers.map(b => (
-              <Card key={b.idBarber} className="bg-bg-secondary text-text-secondary border border-border" title={b.name} subtitle={b.phone}>
+              <Card key={b.idBarber} className="bg-bg-secondary text-text-secondary border border-border" title={b.name}>
                 <div className="space-y-3">
                   <div className="text-sm text-text-muted">
                     Serviços: {countsByBarber.serviceCount.get(b.idBarber) || 0} • Combos: {countsByBarber.comboCount.get(b.idBarber) || 0}
@@ -146,7 +247,6 @@ const BarbeirosPage: React.FC = () => {
       >
         <form id="barber-form" onSubmit={submitBarberForm} className="space-y-4">
           <Input label="Nome" value={barberName} onChange={setBarberName} required id="barber-name" />
-          <Input label="Telefone (opcional)" value={barberPhone} onChange={setBarberPhone} id="barber-phone" />
         </form>
       </Modal>
 
