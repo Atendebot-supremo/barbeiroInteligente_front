@@ -69,7 +69,7 @@ const Header: React.FC = () => {
               </div>
                             <div className="flex flex-col">
                 <span className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
-                  Barbeiro Inteligente
+                  Barbearia Inteligente
                 </span>
               </div>
             </Link>
