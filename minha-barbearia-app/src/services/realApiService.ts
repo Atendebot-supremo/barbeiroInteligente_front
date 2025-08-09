@@ -62,6 +62,20 @@ export interface AvailableSlot {
   available: boolean;
 }
 
+// --- AUTENTICAÇÃO ---
+export const authApi = {
+  login: async (email: string, password: string): Promise<{ token?: string; user: any }> => {
+    // baseURL já inclui "/api"; então usamos caminho relativo "/auth/login"
+    const response = await api.post('/auth/login', { email, password });
+    const payload = response.data ?? {};
+    // API esperada: { success: true, data: { token, barbershop: { ... } } }
+    const envelope = payload.data ?? payload; // caso venha sem envelope
+    const token = envelope.token || envelope.accessToken || envelope.jwt;
+    const user = envelope.barbershop || envelope.user || envelope;
+    return { token, user };
+  },
+};
+
 // --- SERVIÇO DE BARBEARIAS ---
 export const barbershopService = {
   // Listar todas as barbearias
@@ -113,6 +127,63 @@ export const barbershopService = {
   // Deletar barbearia
   delete: async (id: string): Promise<void> => {
     await api.delete(`/barbershop/${id}`);
+  },
+
+  // Serviços (produtos) da barbearia logada
+  getServices: async (barbershopId: string): Promise<Servico[]> => {
+    const response = await api.get(`/barbershop/${barbershopId}/products`);
+    const payload = response.data ?? {};
+    const arr = Array.isArray(payload) ? payload : Array.isArray(payload.data) ? payload.data : [];
+    // Normaliza para o tipo Servico usado no app
+    return (arr as any[]).map((p) => ({
+      idProduct: p.idProduct || p.id || '',
+      idBarber: p.idBarber,
+      name: p.name,
+      price: p.price,
+      desc: p.desc ?? '',
+      duration: p.duration ?? 30,
+    }));
+  },
+  createService: async (barbershopId: string, data: Partial<BarberProduct>): Promise<BarberProduct> => {
+    const response = await api.post(`/barbershop/${barbershopId}/services`, data);
+    return response.data;
+  },
+  updateService: async (
+    barbershopId: string,
+    serviceId: string,
+    data: Partial<BarberProduct>
+  ): Promise<BarberProduct> => {
+    const response = await api.put(`/barbershop/${barbershopId}/services/${serviceId}` , data);
+    return response.data;
+  },
+  deleteService: async (barbershopId: string, serviceId: string): Promise<void> => {
+    await api.delete(`/barbershop/${barbershopId}/services/${serviceId}`);
+  },
+
+  // Barbeiros da barbearia
+  getBarbers: async (barbershopId: string): Promise<Barber[]> => {
+    const response = await api.get(`/barbershop/${barbershopId}/barbers`);
+    const data = response.data;
+    if (Array.isArray(data)) return data as Barber[];
+    if (Array.isArray(data?.data)) return data.data as Barber[];
+    if (Array.isArray(data?.barbers)) return data.barbers as Barber[];
+    return [];
+  },
+  // Criação/edição/exclusão seguem endpoints globais
+  // POST /barbers  { idBarbershop, name }
+  createBarber: async (_barbershopId: string, data: Partial<Barber>): Promise<Barber> => {
+    const payload = { ...data, idBarbershop: (data as any)?.idBarbershop || _barbershopId } as any;
+    const response = await api.post(`/barbers`, payload);
+    return response.data;
+  },
+  // PUT /barbers/{id}
+  updateBarber: async (_barbershopId: string, barberId: string, data: Partial<Barber>): Promise<Barber> => {
+    const response = await api.put(`/barbers/${barberId}`, data);
+    return response.data;
+  },
+  // DELETE /barbers/{id}
+  deleteBarber: async (_barbershopId: string, barberId: string): Promise<void> => {
+    await api.delete(`/barbers/${barberId}`);
   },
 };
 
@@ -202,6 +273,7 @@ export const productService = {
 
   // Criar novo produto
   create: async (data: Partial<BarberProduct>): Promise<BarberProduct> => {
+    // API exige: { idBarber, name, price, desc, duration }
     const response = await api.post('/barber-products', data);
     return response.data;
   },

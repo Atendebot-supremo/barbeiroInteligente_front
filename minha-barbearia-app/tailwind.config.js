@@ -7,27 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Mapear tokens para usar via classes Tailwind
+        // Mapear tokens para usar via classes Tailwind (variáveis em HEX/rgb completos)
         bg: {
-          primary: "hsl(var(--color-bg-primary) / <alpha-value>)",
-          secondary: "hsl(var(--color-bg-secondary) / <alpha-value>)",
+          primary: "var(--color-bg-primary)",
+          secondary: "var(--color-bg-secondary)",
         },
         text: {
-          primary: "hsl(var(--color-text-primary) / <alpha-value>)",
-          secondary: "hsl(var(--color-text-secondary) / <alpha-value>)",
-          muted: "hsl(var(--color-text-muted) / <alpha-value>)",
+          primary: "var(--color-text-primary)",
+          secondary: "var(--color-text-secondary)",
+          muted: "var(--color-text-muted)",
+          whiteMuted: "var(--color-text-white-muted)",
         },
         primary: {
-          DEFAULT: "hsl(var(--color-primary) / <alpha-value>)",
-          foreground: "hsl(var(--color-primary-foreground) / <alpha-value>)",
-          strong: "hsl(var(--color-primary-strong) / <alpha-value>)",
+          DEFAULT: "var(--color-primary)",
+          foreground: "var(--color-primary-foreground)",
+          strong: "var(--color-primary-strong)",
         },
         danger: {
-          DEFAULT: "hsl(var(--color-danger) / <alpha-value>)",
-          border: "hsl(var(--color-danger-border) / <alpha-value>)",
+          DEFAULT: "var(--color-danger)",
+          border: "var(--color-danger-border)",
         },
         border: {
-          DEFAULT: "hsl(var(--color-border) / <alpha-value>)",
+          DEFAULT: "var(--color-border)",
         },
       },
     },

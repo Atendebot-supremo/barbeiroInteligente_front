@@ -1,5 +1,6 @@
 // src/routes.tsx
 import { Routes, Route } from 'react-router-dom';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 // Páginas
 import LoginPage from '../pages/LoginPage';
@@ -14,18 +15,20 @@ import TestApiPage from '../pages/TestApiPage';
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Rotas Públicas (sem proteção por enquanto) */}
+      {/* Rotas Públicas */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/cadastro" element={<CadastroPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/servicos" element={<ServicosPage />} />
-      <Route path="/barbeiros" element={<BarbeirosPage />} />
-      <Route path="/agenda" element={<AgendaPage />} />
-      <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+      
+      {/* Rotas Protegidas */}
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/servicos" element={<ProtectedRoute><ServicosPage /></ProtectedRoute>} />
+      <Route path="/barbeiros" element={<ProtectedRoute><BarbeirosPage /></ProtectedRoute>} />
+      <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
+      <Route path="/configuracoes" element={<ProtectedRoute><ConfiguracoesPage /></ProtectedRoute>} />
       <Route path="/test-api" element={<TestApiPage />} />
 
       {/* Rota inicial */}
-      <Route path="/" element={<DashboardPage />} />
+      <Route path="/" element={<LoginPage />} />
     </Routes>
   );
 };

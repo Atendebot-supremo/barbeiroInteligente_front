@@ -31,10 +31,19 @@ const Header: React.FC = () => {
     };
   }, [userMenuOpen]);
 
-  // Temporariamente removendo a verificação de autenticação para debug
-  // if (!isAuthenticated) {
-  //   return null;
-  // }
+  // Exibir header apenas quando autenticado
+  // Caso deseje exibir em telas públicas, remover este retorno
+  // Se não houver usuário, não renderiza o Header
+  // Isso evita mostrar navegação protegida sem login
+  // Observação: as rotas já estão protegidas, mas mantemos o comportamento visual aqui
+  // para evitar o menu do usuário sem contexto.
+  // Se preferir manter o Header com links para login/cadastro, comente as linhas abaixo.
+  // return null se não houver usuário
+  // Nota: usamos 'user' para essa checagem direta
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  if (!user) {
+    return null;
+  }
 
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
@@ -59,7 +68,7 @@ const Header: React.FC = () => {
                 
               </div>
                             <div className="flex flex-col">
-                <span className="text-2xl font-bold" style={{ color: 'hsl(var(--color-primary))' }}>
+                <span className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
                   Barbeiro Inteligente
                 </span>
               </div>
@@ -75,7 +84,7 @@ const Header: React.FC = () => {
                   ? 'text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
-              style={isActiveRoute('/dashboard') ? { backgroundColor: 'hsl(var(--color-primary))' } : {}}
+              style={isActiveRoute('/dashboard') ? { backgroundColor: 'var(--color-primary)' } : {}}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +101,7 @@ const Header: React.FC = () => {
                   ? 'text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
-              style={isActiveRoute('/agenda') ? { backgroundColor: 'hsl(var(--color-primary))' } : {}}
+              style={isActiveRoute('/agenda') ? { backgroundColor: 'var(--color-primary)' } : {}}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,7 +118,7 @@ const Header: React.FC = () => {
                   ? 'text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
-              style={isActiveRoute('/servicos') ? { backgroundColor: 'hsl(var(--color-primary))' } : {}}
+              style={isActiveRoute('/servicos') ? { backgroundColor: 'var(--color-primary)' } : {}}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +135,7 @@ const Header: React.FC = () => {
                   ? 'text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
-              style={isActiveRoute('/barbeiros') ? { backgroundColor: 'hsl(var(--color-primary))' } : {}}
+              style={isActiveRoute('/barbeiros') ? { backgroundColor: 'var(--color-primary)' } : {}}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +154,7 @@ const Header: React.FC = () => {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center space-x-3 p-2 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/30 hover:border-slate-500/50 transition-all duration-300 group"
                 >
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300" style={{ backgroundColor: 'hsl(var(--color-primary))' }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300" style={{ backgroundColor: 'var(--color-primary)' }}>
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>

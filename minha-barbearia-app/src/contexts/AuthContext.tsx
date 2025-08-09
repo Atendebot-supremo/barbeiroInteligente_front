@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Barbearia } from '../types';
 
-import { authService } from '../services/mockApiService';
+// Preferir API real; manter mock como fallback opcional
+import { authApi } from '../services/realApiService';
 
 interface AuthContextType {
   user: Barbearia | null;
@@ -33,21 +34,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Verificar se há um usuário salvo no localStorage
+    // Restaurar sessão
     const savedUser = localStorage.getItem('user');
+    const savedToken = localStorage.getItem('token');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
-    } else {
-      // Usuário padrão para desenvolvimento/demo
-      const defaultUser: Barbearia = {
-        idBarbershop: 'demo-id',
-        barbershop: 'Barbearia Demo',
-        email: 'admin@barbeiro.com',
-        phone: '(11) 99999-9999',
-        status: 'Ativo'
-      };
-      setUser(defaultUser);
-      localStorage.setItem('user', JSON.stringify(defaultUser));
+    }
+    if (savedToken) {
+      // Token será anexado por interceptor se configurado
     }
     setIsLoading(false);
   }, []);
@@ -56,9 +50,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await authService.login(email, password);
-      setUser(response.user);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      const { token, user } = await authApi.login(email, password);
+      setUser(user);
+      localStorage.setItem('user', JSON.stringify(user));
+      if (token) {
+        localStorage.setItem('token', token);
+      }
     } catch (err: any) {
       setError(err.message);
       throw err;
@@ -70,10 +67,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   const value: AuthContextType = {
-    user,
+    // Normalizar o user para conter idBarbershop sempre
+    user: user
+      ? {
+          ...user,
+          // Suportar formatos "id" ou "idBarbershop" do backend
+          idBarbershop: (user as any).idBarbershop || (user as any).id || user.idBarbershop,
+        }
+      : null,
     isAuthenticated: !!user,
     isLoading,
     login,

@@ -1,19 +1,31 @@
 // src/pages/LoginPage.tsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('barbeiro@teste.com');
-  const [password, setPassword] = useState('1234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Por enquanto, sem autenticação: navegar direto
-    navigate('/servicos');
+    setError(null);
+    try {
+      setLoading(true);
+      await login(email, password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Falha no login');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,6 +61,9 @@ const LoginPage = () => {
 
         <Card className="bg-bg-secondary text-text-secondary border border-border">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error ? (
+              <div className="text-sm text-red-600">{error}</div>
+            ) : null}
             <Input
               label="Email"
               type="email"
@@ -70,8 +85,9 @@ const LoginPage = () => {
             <Button
               type="submit"
               className="w-full"
+              disabled={loading}
             >
-              Entrar
+              {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
         </Card>

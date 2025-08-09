@@ -2,7 +2,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal, Input } from '../components/ui';
 import type { Barbeiro, Servico } from '../types';
-import { loadBarbers, saveBarbers, loadServices, loadAppointments, saveAppointments } from '../services/localStore';
+import { loadServices, loadAppointments, saveAppointments } from '../services/localStore';
+import { useAuth } from '../contexts/AuthContext';
+import { barbershopService } from '../services/realApiService';
 import type { Agendamento } from '../types';
 
 import FullCalendar from '@fullcalendar/react';
@@ -12,6 +14,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 
 const AgendaPage: React.FC = () => {
+  const { user } = useAuth();
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [services, setServices] = useState<Servico[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
@@ -44,19 +47,27 @@ const AgendaPage: React.FC = () => {
   const [newClientPhone, setNewClientPhone] = useState<string>('');
 
   useEffect(() => {
-    const stored = loadBarbers();
-    if (stored.length > 0) {
-      setBarbers(stored);
-    } else {
-      const seeded = [
-        { idBarber: 'uuid-barber-1', name: 'João' },
-        { idBarber: 'uuid-barber-2', name: 'Carlos' },
-      ];
-      setBarbers(seeded);
-      saveBarbers(seeded);
-    }
-    setServices(loadServices());
-  }, []);
+    const load = async () => {
+      try {
+        // Carregar barbeiros reais da barbearia
+        if (user?.idBarbershop) {
+          const apiBarbers = await barbershopService.getBarbers(user.idBarbershop);
+          const formatted: Barbeiro[] = apiBarbers.map((b: any) => ({
+            idBarber: b.id || b.idBarber || '',
+            name: b.name,
+            phone: b.phone,
+          }));
+          setBarbers(formatted);
+        } else {
+          setBarbers([]);
+        }
+      } finally {
+        // Serviços do local (ou poderiam vir da API também, já suportamos em ServicosPage)
+        setServices(loadServices());
+      }
+    };
+    load();
+  }, [user?.idBarbershop]);
 
   // Carregar agendamentos do localStorage e convertê-los para eventos do calendário
   useEffect(() => {

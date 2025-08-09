@@ -7,35 +7,38 @@
 /* Paleta de cores personalizada (a partir da tabela enviada) */
 :root {
   /* Fundo Principal */
-  --color-bg-primary: 217 33% 17%; /* slate-900 -> #0f172a */
+  --color-bg-primary: #0f172a; /* slate-900 */
 
-  /* Texto Principal (use a primeira opção por padrão) */
-  --color-text-primary: 210 40% 98%; /* stone-100 -> #f1f5f9 */
+  /* Texto Principal */
+  --color-text-primary: #f1f5f9; /* stone-100 */
 
   --color-text-primary-dark: rgba(0, 0, 0, 0.5);
 
   /* Fundo Secundário */
-  --color-bg-secondary: 60 5% 96%; /* stone-50 -> #fafaf9 */
+  --color-bg-secondary: #fafaf9; /* stone-50 */
 
   /* Texto Secundário */
-  --color-text-secondary: 215 25% 27%; /* slate-700 -> #334155 */
+  --color-text-secondary: #334155; /* slate-700 */
 
   /* Botões e Links */
-  --color-primary: 35 92% 36%; /* amber-700 -> #b45309 */
-  --color-primary-foreground: 0 0% 100%;
+  --color-primary: #b45309; /* amber-700 */
+  --color-primary-foreground: #ffffff;
 
-  /* Gradiente de Botão (pode ser usado como hover/fim do gradiente) */
-  --color-primary-strong: 20 94% 33%; /* orange-800 -> #9a3412 */
+  /* Ênfase */
+  --color-primary-strong: #9a3412; /* orange-800 */
 
   /* Notificações e Selos */
-  --color-danger: 0 72% 51%; /* red-600 -> #dc2626 */
-  --color-danger-border: 0 93% 71%; /* red-400 -> #f87171 */
+  --color-danger: #dc2626; /* red-600 */
+  --color-danger-border: #f87171; /* red-400 */
 
   /* Bordas e Divisões */
-  --color-border: 214 32% 91%; /* stone-200 -> #e2e8f0 */
+  --color-border: #e2e8f0; /* stone-200 */
 
   /* Texto de Suporte */
-  --color-text-muted: 210 40% 98%; /* slate-600 -> #475569 */
+  --color-text-muted: #475569; /* slate-600 */
+
+  /* Subtexto quando o texto principal é branco (sobre fundo escuro) */
+  --color-text-white-muted: rgba(255, 255, 255, 0.7);
 }
 
 /* Tema claro por padrão; você pode ajustar um tema escuro depois se quiser */

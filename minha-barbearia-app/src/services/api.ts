@@ -13,6 +13,16 @@ const api = axios.create({
   },
 });
 
+// Interceptor para anexar Authorization se houver token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers = config.headers || {};
+    (config.headers as any)['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Interceptor para tratamento de erros
 api.interceptors.response.use(
   (response) => response,
