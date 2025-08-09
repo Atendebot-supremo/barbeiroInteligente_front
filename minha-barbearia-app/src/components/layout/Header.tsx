@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Header: React.FC = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -31,9 +31,10 @@ const Header: React.FC = () => {
     };
   }, [userMenuOpen]);
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  // Temporariamente removendo a verificação de autenticação para debug
+  // if (!isAuthenticated) {
+  //   return null;
+  // }
 
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
@@ -47,22 +48,19 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             <Link to="/dashboard" className="flex items-center space-x-3 group">
               <div className="relative">
-                <img 
-                  src="/src/assets/Logo - Barbeiro Inteligente.jpeg" 
-                  alt="Logo" 
-                  className="h-12 w-12 rounded-lg shadow-lg group-hover:shadow-xl transition-shadow duration-300"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg group-hover:opacity-100 opacity-0 transition-opacity duration-300"></div>
+                             <img 
+                 src="/src/assets/Logo - Barbeiro Inteligente - Sem Fundo.png" 
+                 alt="Logo" 
+                  className="h-12 w-12 rounded-lg"
+                 onError={(e) => {
+                   e.currentTarget.style.display = 'none';
+                 }}
+               />
+                
               </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                            <div className="flex flex-col">
+                <span className="text-2xl font-bold" style={{ color: 'hsl(var(--color-primary))' }}>
                   Barbeiro Inteligente
-                </span>
-                <span className="text-xs text-slate-400 font-medium tracking-wide">
-                  Gestão Profissional
                 </span>
               </div>
             </Link>
@@ -74,9 +72,10 @@ const Header: React.FC = () => {
               to="/dashboard" 
               className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                 isActiveRoute('/dashboard') 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                  ? 'text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
+              style={isActiveRoute('/dashboard') ? { backgroundColor: 'hsl(var(--color-primary))' } : {}}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,9 +89,10 @@ const Header: React.FC = () => {
               to="/agenda" 
               className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                 isActiveRoute('/agenda') 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                  ? 'text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
+              style={isActiveRoute('/agenda') ? { backgroundColor: 'hsl(var(--color-primary))' } : {}}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,9 +106,10 @@ const Header: React.FC = () => {
               to="/servicos" 
               className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                 isActiveRoute('/servicos') 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                  ? 'text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
+              style={isActiveRoute('/servicos') ? { backgroundColor: 'hsl(var(--color-primary))' } : {}}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,9 +123,10 @@ const Header: React.FC = () => {
               to="/barbeiros" 
               className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                 isActiveRoute('/barbeiros') 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                  ? 'text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
+              style={isActiveRoute('/barbeiros') ? { backgroundColor: 'hsl(var(--color-primary))' } : {}}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,19 +139,19 @@ const Header: React.FC = () => {
 
           {/* Menu do usuário à direita */}
           <div className="flex items-center space-x-4">
-            {user && (
+            {user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center space-x-3 p-2 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/30 hover:border-slate-500/50 transition-all duration-300 group"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300" style={{ backgroundColor: 'hsl(var(--color-primary))' }}>
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                   <div className="hidden md:block text-left">
-                    <p className="text-sm font-semibold text-white">{user.barbershop}</p>
+                    <p className="text-sm font-semibold text-white">{user?.barbershop || 'Usuário'}</p>
                     <p className="text-xs text-slate-400">Admin</p>
                   </div>
                   <svg className="w-4 h-4 text-slate-400 group-hover:text-slate-300 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,10 +163,10 @@ const Header: React.FC = () => {
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-3 w-64 bg-slate-800 rounded-2xl shadow-2xl border border-slate-600/30 py-2 z-50 backdrop-blur-xl">
                     <div className="px-4 py-3 border-b border-slate-600/30">
-                      <p className="text-sm font-semibold text-white">{user.barbershop}</p>
-                      <p className="text-xs text-slate-400">{user.email || 'admin@barbeiro.com'}</p>
-                      <div className="mt-2 px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg">
-                        <span className="text-xs font-medium text-blue-300">Plano Premium</span>
+                      <p className="text-sm font-semibold text-white">{user?.barbershop || 'Usuário'}</p>
+                      <p className="text-xs text-slate-400">{user?.email || 'admin@barbeiro.com'}</p>
+                      <div className="mt-2 px-3 py-1 rounded-lg" style={{ backgroundColor: 'hsl(var(--color-primary) / 0.2)' }}>
+                        <span className="text-xs font-medium" style={{ color: 'hsl(var(--color-primary))' }}>Plano Premium</span>
                       </div>
                     </div>
                     
@@ -206,6 +208,22 @@ const Header: React.FC = () => {
                     </div>
                   </div>
                 )}
+                </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors duration-200"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/cadastro"
+                  className="px-4 py-2 text-white text-sm font-medium rounded-lg hover:shadow-lg transition-all duration-200"
+                  style={{ backgroundColor: 'hsl(var(--color-primary))' }}
+                >
+                  Cadastro
+                </Link>
               </div>
             )}
           </div>

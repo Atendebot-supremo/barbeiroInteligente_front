@@ -17,7 +17,6 @@ const DashboardPage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
-            <p className="text-text-secondary">Visão geral da sua barbearia</p>
           </div>
         </div>
 

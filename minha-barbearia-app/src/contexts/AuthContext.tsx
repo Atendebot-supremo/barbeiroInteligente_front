@@ -37,6 +37,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
+    } else {
+      // Usuário padrão para desenvolvimento/demo
+      const defaultUser: Barbearia = {
+        idBarbershop: 'demo-id',
+        barbershop: 'Barbearia Demo',
+        email: 'admin@barbeiro.com',
+        phone: '(11) 99999-9999',
+        status: 'Ativo'
+      };
+      setUser(defaultUser);
+      localStorage.setItem('user', JSON.stringify(defaultUser));
     }
     setIsLoading(false);
   }, []);
