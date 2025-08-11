@@ -2,6 +2,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import PublicRoute from '../components/auth/PublicRoute';
 import { Loading } from '../components/ui';
 
 // Lazy loading das páginas
@@ -19,9 +20,9 @@ export const AppRoutes = () => {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
-        {/* Rotas Públicas */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/cadastro" element={<CadastroPage />} />
+        {/* Rotas Públicas - redirecionam para dashboard se já logado */}
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/cadastro" element={<PublicRoute><CadastroPage /></PublicRoute>} />
         
         {/* Rotas Protegidas */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -31,8 +32,8 @@ export const AppRoutes = () => {
         <Route path="/horarios" element={<ProtectedRoute><HorariosPage /></ProtectedRoute>} />
         <Route path="/configuracoes" element={<ProtectedRoute><ConfiguracoesPage /></ProtectedRoute>} />
 
-        {/* Rota inicial */}
-        <Route path="/" element={<LoginPage />} />
+        {/* Rota inicial - abre dashboard por padrão */}
+        <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       </Routes>
     </Suspense>
   );
