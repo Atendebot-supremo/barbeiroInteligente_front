@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Input, Modal } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { barbershopService } from '../services/realApiService';
-import type { Barbershop } from '../services/realApiService';
+import type { Barbearia } from '../types';
 import { Bell, User, Store, CreditCard, AlertTriangle, Save, Edit3 } from 'lucide-react';
 
 const ConfiguracoesPage: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [barbershopData, setBarbershopData] = useState<Barbershop | null>(null);
+  const [barbershopData, setBarbershopData] = useState<Barbearia | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [notifications, setNotifications] = useState({
@@ -384,8 +384,8 @@ const ConfiguracoesPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </Card>
+            </div>
+          </Card>
 
         {/* Área de Perigo */}
         <Card className="bg-red-50 border border-red-200">
@@ -393,7 +393,7 @@ const ConfiguracoesPage: React.FC = () => {
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-red-600" />
               <h2 className="text-xl font-semibold text-red-800">Área de Perigo</h2>
-            </div>
+        </div>
 
             <div className="space-y-4">
               <div>

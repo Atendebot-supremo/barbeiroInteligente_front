@@ -1,65 +1,39 @@
 // src/services/realApiService.ts
 import api from './api';
-import type { Servico, Agendamento } from '../types';
+import type { 
+  Servico, 
+  Agendamento, 
+  Barbearia, 
+  Barbeiro, 
+  HorarioBarbeiro, 
+  SlotDisponivel,
+  StatusBarbearia,
+  StatusAgendamento,
+  BaseEntity
+} from '../types';
 
-// --- INTERFACES PARA A API REAL ---
-export interface Barbershop {
-  id?: string;
-  barbershop: string;     // Nome da barbearia
-  email: string;
-  password?: string;      // Obrigatório na criação, opcional na resposta
-  cnpj: string;
-  phone: string;
-  instanceZapi: string;
-  status: string;
-  createdAt?: string;
-  updatedAt?: string;
+// --- INTERFACES ESPECÍFICAS DA API (quando diferentes do frontend) ---
+// Interface para dados da barbearia na API (inclui campos extras da API)
+export interface BarbershopAPI extends Barbearia, BaseEntity {
+  id?: string;           // API usa 'id', frontend usa 'idBarbershop'
+  password?: string;     // Só usado na criação
+  cnpj: string;         // Obrigatório na API
+  instanceZapi?: string; // Configuração WhatsApp
 }
 
-export interface Barber {
-  id?: string;
-  idBarbershop: string;
-  name: string;
-  createdAt?: string;
-  updatedAt?: string;
+// Interface para barbeiro na API (mapeamento de campos)
+export interface BarberAPI extends Barbeiro, BaseEntity {
+  id?: string;  // API usa 'id', frontend usa 'idBarber'
 }
 
-export interface BarberProduct {
-  id?: string;
-  idBarber: string;
-  name: string;
-  price: number;
-  desc?: string;
-  duration?: number;
-  createdAt?: string;
-  updatedAt?: string;
+// Interface para produto/serviço na API
+export interface ProductAPI extends Servico, BaseEntity {
+  id?: string;  // API usa 'id', frontend usa 'idProduct'
 }
 
-export interface BarberSchedule {
-  id?: string;        // idSchedule da API
-  idBarber: string;
-  startHour: string;  // formato timetz: "13:33:00+00"
-  endHour: string;    // formato timetz: "15:33:00+00"
-  day: string;        // "segunda-feira", "terça-feira", etc.
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface BarberAppointment {
-  id?: string;
-  idBarbershop: string;
-  idBarber: string;
-  idProduct: string;
-  clientName: string;
-  clientPhone: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface AvailableSlot {
-  time: string;
-  available: boolean;
+// Interface para agendamento na API
+export interface AppointmentAPI extends Agendamento, BaseEntity {
+  id?: string;  // API usa 'id', frontend usa 'idAppointment'
 }
 
 // --- AUTENTICAÇÃO ---
@@ -79,7 +53,7 @@ export const authApi = {
 // --- SERVIÇO DE BARBEARIAS ---
 export const barbershopService = {
   // Listar todas as barbearias
-  getAll: async (filters?: { search?: string; status?: string; cnpj?: string }): Promise<Barbershop[]> => {
+  getAll: async (filters?: { search?: string; status?: string; cnpj?: string }): Promise<Barbearia[]> => {
     const params = new URLSearchParams();
     if (filters?.search) params.append('search', filters.search);
     if (filters?.status) params.append('status', filters.status);
@@ -102,13 +76,13 @@ export const barbershopService = {
   },
 
   // Buscar barbearia por ID
-  getById: async (id: string): Promise<Barbershop> => {
+  getById: async (id: string): Promise<Barbearia> => {
     const response = await api.get(`/barbershop/${id}`);
     return response.data;
   },
 
   // Criar nova barbearia
-  create: async (data: Partial<Barbershop>): Promise<Barbershop> => {
+  create: async (data: Partial<BarbershopAPI>): Promise<Barbearia> => {
     console.log('🏪 Criando barbearia com dados:', data);
     console.log('📤 Enviando POST para /barbershop');
     
@@ -119,7 +93,7 @@ export const barbershopService = {
   },
 
   // Atualizar barbearia
-  update: async (id: string, data: Partial<Barbershop>): Promise<Barbershop> => {
+  update: async (id: string, data: Partial<BarbershopAPI>): Promise<Barbearia> => {
     const response = await api.put(`/barbershop/${id}`, data);
     return response.data;
   },
@@ -161,23 +135,23 @@ export const barbershopService = {
   },
 
   // Barbeiros da barbearia
-  getBarbers: async (barbershopId: string): Promise<Barber[]> => {
+  getBarbers: async (barbershopId: string): Promise<Barbeiro[]> => {
     const response = await api.get(`/barbershop/${barbershopId}/barbers`);
     const data = response.data;
-    if (Array.isArray(data)) return data as Barber[];
-    if (Array.isArray(data?.data)) return data.data as Barber[];
-    if (Array.isArray(data?.barbers)) return data.barbers as Barber[];
+    if (Array.isArray(data)) return data as Barbeiro[];
+    if (Array.isArray(data?.data)) return data.data as Barbeiro[];
+    if (Array.isArray(data?.barbers)) return data.barbers as Barbeiro[];
     return [];
   },
   // Criação/edição/exclusão seguem endpoints globais
   // POST /barbers  { idBarbershop, name }
-  createBarber: async (_barbershopId: string, data: Partial<Barber>): Promise<Barber> => {
+  createBarber: async (_barbershopId: string, data: Partial<BarberAPI>): Promise<Barbeiro> => {
     const payload = { ...data, idBarbershop: (data as any)?.idBarbershop || _barbershopId } as any;
     const response = await api.post(`/barbers`, payload);
     return response.data;
   },
   // PUT /barbers/{id}
-  updateBarber: async (_barbershopId: string, barberId: string, data: Partial<Barber>): Promise<Barber> => {
+  updateBarber: async (_barbershopId: string, barberId: string, data: Partial<BarberAPI>): Promise<Barbeiro> => {
     const response = await api.put(`/barbers/${barberId}`, data);
     return response.data;
   },
@@ -190,7 +164,7 @@ export const barbershopService = {
 // --- SERVIÇO DE BARBEIROS ---
 export const barberService = {
   // Listar todos os barbeiros
-  getAll: async (filters?: { search?: string }): Promise<Barber[]> => {
+  getAll: async (filters?: { search?: string }): Promise<Barbeiro[]> => {
     const params = new URLSearchParams();
     if (filters?.search) params.append('search', filters.search);
     
@@ -211,19 +185,19 @@ export const barberService = {
   },
 
   // Buscar barbeiro por ID
-  getById: async (id: string): Promise<Barber> => {
+  getById: async (id: string): Promise<Barbeiro> => {
     const response = await api.get(`/barbers/${id}`);
     return response.data;
   },
 
   // Criar novo barbeiro
-  create: async (data: Partial<Barber>): Promise<Barber> => {
+  create: async (data: Partial<BarberAPI>): Promise<Barbeiro> => {
     const response = await api.post('/barbers', data);
     return response.data;
   },
 
   // Atualizar barbeiro
-  update: async (id: string, data: Partial<Barber>): Promise<Barber> => {
+  update: async (id: string, data: Partial<BarberAPI>): Promise<Barbeiro> => {
     const response = await api.put(`/barbers/${id}`, data);
     return response.data;
   },
@@ -242,7 +216,7 @@ export const productService = {
     idBarber?: string; 
     price_min?: number; 
     price_max?: number; 
-  }): Promise<BarberProduct[]> => {
+  }): Promise<Servico[]> => {
     const params = new URLSearchParams();
     if (filters?.search) params.append('search', filters.search);
     if (filters?.idBarber) params.append('idBarber', filters.idBarber);
@@ -266,20 +240,20 @@ export const productService = {
   },
 
   // Buscar produto por ID
-  getById: async (id: string): Promise<BarberProduct> => {
+  getById: async (id: string): Promise<Servico> => {
     const response = await api.get(`/barber-products/${id}`);
     return response.data;
   },
 
   // Criar novo produto
-  create: async (data: Partial<BarberProduct>): Promise<BarberProduct> => {
+  create: async (data: Partial<ProductAPI>): Promise<Servico> => {
     // API exige: { idBarber, name, price, desc, duration }
     const response = await api.post('/barber-products', data);
     return response.data;
   },
 
   // Atualizar produto
-  update: async (id: string, data: Partial<BarberProduct>): Promise<BarberProduct> => {
+  update: async (id: string, data: Partial<ProductAPI>): Promise<Servico> => {
     const response = await api.put(`/barber-products/${id}`, data);
     return response.data;
   },
@@ -293,7 +267,7 @@ export const productService = {
 // --- SERVIÇO DE HORÁRIOS ---
 export const scheduleService = {
   // Listar todos os horários
-  getAll: async (): Promise<BarberSchedule[]> => {
+  getAll: async (): Promise<HorarioBarbeiro[]> => {
     const response = await api.get('/barber-schedules');
     console.log('📅 Resposta da API - getAll schedules:', response.data);
     
@@ -325,7 +299,7 @@ export const scheduleService = {
   },
 
   // Buscar horários por barbeiro
-  getByBarber: async (barberId: string): Promise<BarberSchedule[]> => {
+  getByBarber: async (barberId: string): Promise<HorarioBarbeiro[]> => {
     const allSchedules = await scheduleService.getAll();
     return allSchedules.filter(schedule => schedule.idBarber === barberId);
   },
@@ -336,7 +310,7 @@ export const scheduleService = {
     startHour: string; // formato ISO com timezone
     endHour: string;   // formato ISO com timezone
     day: string;       // nome do dia da semana
-  }): Promise<BarberSchedule> => {
+  }): Promise<HorarioBarbeiro> => {
     console.log('📅 Criando horário:', data);
     const response = await api.post('/barber-schedules', data);
     console.log('✅ Horário criado - resposta completa:', response.data);
@@ -365,19 +339,19 @@ export const scheduleService = {
   },
 
   // Buscar horário por ID
-  getById: async (id: string): Promise<BarberSchedule> => {
+  getById: async (id: string): Promise<HorarioBarbeiro> => {
     const response = await api.get(`/barber-schedules/${id}`);
     return response.data;
   },
 
   // Atualizar horário
-  update: async (id: string, data: Partial<BarberSchedule>): Promise<BarberSchedule> => {
+  update: async (id: string, data: Partial<HorarioBarbeiro>): Promise<HorarioBarbeiro> => {
     const response = await api.put(`/barber-schedules/${id}`, data);
     return response.data;
   },
 
   // Buscar slots disponíveis
-  getAvailableSlots: async (barberId: string, date: string, day: string): Promise<AvailableSlot[]> => {
+  getAvailableSlots: async (barberId: string, date: string, day: string): Promise<SlotDisponivel[]> => {
     const params = new URLSearchParams();
     params.append('date', date);
     params.append('day', day);
@@ -387,7 +361,7 @@ export const scheduleService = {
   },
 
   // Buscar horários semanais do barbeiro
-  getWeeklySchedule: async (barberId: string): Promise<BarberSchedule[]> => {
+  getWeeklySchedule: async (barberId: string): Promise<HorarioBarbeiro[]> => {
     return await scheduleService.getByBarber(barberId);
   },
 };
@@ -395,7 +369,7 @@ export const scheduleService = {
 // --- SERVIÇO DE AGENDAMENTOS ---
 export const appointmentService = {
   // Buscar agendamentos de um barbeiro específico
-  getByBarber: async (barberId: string): Promise<BarberAppointment[]> => {
+  getByBarber: async (barberId: string): Promise<Agendamento[]> => {
     const response = await api.get(`/barbers/${barberId}/appointments`);
     // A API pode retornar { data: [...] } ou diretamente [...]
     const data = response.data?.data || response.data;
@@ -403,7 +377,7 @@ export const appointmentService = {
   },
 
   // Buscar agendamento por ID
-  getById: async (id: string): Promise<BarberAppointment> => {
+  getById: async (id: string): Promise<Agendamento> => {
     const response = await api.get(`/barber-appointments/${id}`);
     return response.data;
   },
@@ -416,8 +390,8 @@ export const appointmentService = {
     clientName: string;
     clientPhone: string;
     startOfSchedule: string; // timestamp em formato ISO com timezone Brasil
-    status: string;
-  }): Promise<BarberAppointment> => {
+    status: StatusAgendamento;
+  }): Promise<Agendamento> => {
     const response = await api.post('/barber-appointments', data);
     return response.data;
   },
@@ -427,8 +401,8 @@ export const appointmentService = {
     clientName?: string;
     clientPhone?: string;
     startOfSchedule?: string; // formato HH:mm ou timestamp completo
-    status?: string;
-  }): Promise<BarberAppointment> => {
+    status?: StatusAgendamento;
+  }): Promise<Agendamento> => {
     const response = await api.put(`/barber-appointments/${id}`, data);
     return response.data;
   },

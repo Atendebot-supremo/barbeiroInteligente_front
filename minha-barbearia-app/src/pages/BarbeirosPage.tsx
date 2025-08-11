@@ -1,5 +1,5 @@
 // src/pages/BarbeirosPage.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
 import type { Barbeiro, Servico, Combo } from '../types';
 import { loadCombos, saveCombos } from '../services/localStore';
@@ -131,10 +131,10 @@ const BarbeirosPage: React.FC = () => {
   // Excluir barbeiro (e dados associados)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingBarberId, setDeletingBarberId] = useState<string | null>(null);
-  const requestDeleteBarber = (id: string) => {
+  const requestDeleteBarber = useCallback((id: string) => {
     setDeletingBarberId(id);
     setConfirmDeleteOpen(true);
-  };
+  }, []);
   const confirmDeleteBarber = async () => {
     if (!deletingBarberId) return;
     try {

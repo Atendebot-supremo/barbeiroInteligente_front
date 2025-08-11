@@ -1,5 +1,5 @@
 // src/pages/ServicosPage.tsx
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { barbershopService, productService } from '../services/realApiService';
 import type { Servico, Barbeiro } from '../types';
 import { Button, Card, Loading, Modal, Input } from '../components/ui';
@@ -78,7 +78,7 @@ const ServicosPage = () => {
   const [serviceDuration, setServiceDuration] = useState<number>(30);
   const [serviceDesc, setServiceDesc] = useState('');
 
-  const openAddService = () => {
+  const openAddService = useCallback(() => {
     setEditingServiceId(null);
     setServiceName('');
     setServicePrice(0);
@@ -86,9 +86,9 @@ const ServicosPage = () => {
     setServiceDesc('');
     setServiceBarberId(selectedBarberId || barbers[0]?.idBarber || '');
     setServiceModalOpen(true);
-  };
+  }, [selectedBarberId, barbers]);
 
-  const openEditService = (svc: Servico) => {
+  const openEditService = useCallback((svc: Servico) => {
     setEditingServiceId(svc.idProduct);
     setServiceName(svc.name);
     setServicePrice(svc.price);
@@ -96,7 +96,7 @@ const ServicosPage = () => {
     setServiceDesc(svc.desc || '');
     setServiceBarberId(svc.idBarber);
     setServiceModalOpen(true);
-  };
+  }, []);
 
   const submitServiceForm: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
