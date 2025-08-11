@@ -1,5 +1,5 @@
 // src/pages/ServicosPage.tsx
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { barbershopService, productService } from '../services/realApiService';
 import type { Servico, Barbeiro } from '../types';
 import { Button, Card, Loading, Modal, Input } from '../components/ui';
@@ -14,7 +14,10 @@ const ServicosPage = () => {
   const [services, setServices] = useState<Servico[]>([]);
   // Sem seção de combos; combos serão criados como produtos automaticamente
   const [loading, setLoading] = useState(true);
-  const servicesCarouselRef = useRef<HTMLDivElement | null>(null);
+  
+  // Estados para paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   useEffect(() => {
     const loadData = async () => {
@@ -62,12 +65,7 @@ const ServicosPage = () => {
     loadData();
   }, []);
 
-  const scrollCarouselBy = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
-    const el = ref.current;
-    if (!el) return;
-    const amount = Math.floor(el.clientWidth * 0.9);
-    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
-  };
+
 
   // ---------- CRUD - Serviços ----------
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
@@ -187,7 +185,34 @@ const ServicosPage = () => {
     () => (selectedBarberId ? services.filter(s => s.idBarber === selectedBarberId) : services),
     [services, selectedBarberId]
   );
-  // Sem seção de combos
+
+  // Cálculos de paginação
+  const totalPages = Math.ceil(servicesOfBarber.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentServices = servicesOfBarber.slice(startIndex, endIndex);
+
+  // Reset da página quando mudar filtro
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedBarberId]);
+
+  // Funções de navegação
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   if (loading) {
     return (
@@ -242,13 +267,22 @@ const ServicosPage = () => {
           </div>
         </div>
 
-        {/* Carousel de Serviços */}
-        <div className="relative">
-          <div className="overflow-x-auto snap-x snap-mandatory carousel" ref={servicesCarouselRef}>
-            <div className="flex gap-4 py-2">
-              {servicesOfBarber.map(service => (
-                <div key={service.idProduct} className="snap-center flex-shrink-0 w-72">
+        {/* Grid de Serviços */}
+        <div className="space-y-6">
+          {servicesOfBarber.length === 0 ? (
+            <Card className="bg-bg-secondary text-text-secondary border border-border">
+              <div className="text-center py-12">
+                <p className="text-text-muted text-lg mb-4">Nenhum serviço cadastrado</p>
+                <Button variant="primary" onClick={openAddService}>Adicionar Primeiro Serviço</Button>
+              </div>
+            </Card>
+          ) : (
+            <>
+              {/* Grid 3x3 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {currentServices.map(service => (
                   <Card
+                    key={service.idProduct}
                     title={service.name}
                     subtitle={`${formatCurrency(service.price)} • ${formatDuration(service.duration)}`}
                     hoverable
@@ -264,35 +298,65 @@ const ServicosPage = () => {
                       </div>
                     </div>
                   </Card>
-                </div>
-              ))}
-              {servicesOfBarber.length === 0 && (
-                <div className="w-full">
-                  <Card className="bg-bg-secondary text-text-secondary border border-border">
-                    <div className="text-center py-8">
-                      <p className="text-text-muted">Nenhum serviço cadastrado</p>
-                      <Button variant="primary" className="mt-4">Adicionar Primeiro Serviço</Button>
-                    </div>
-                  </Card>
+                ))}
+              </div>
+
+              {/* Sistema de Paginação */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center space-x-2 mt-8">
+                  {/* Botão Anterior */}
+                  <button
+                    onClick={goToPrevPage}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-2 rounded-md ${
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                    }`}
+                  >
+                    ← Anterior
+                  </button>
+
+                  {/* Números das páginas */}
+                  <div className="flex space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={`px-3 py-2 rounded-md min-w-[40px] ${
+                          currentPage === page
+                            ? 'bg-primary text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Botão Próximo */}
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-2 rounded-md ${
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                    }`}
+                  >
+                    Próximo →
+                  </button>
                 </div>
               )}
-            </div>
-          </div>
-          {/* Arrows */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex justify-between items-center">
-            <button
-              className="pointer-events-auto ml-[-8px] rounded-full bg-bg-secondary/80 border border-border text-text-secondary px-3 py-2 shadow hover:bg-bg-secondary"
-              onClick={() => scrollCarouselBy(servicesCarouselRef, 'left')}
-            >
-              ‹
-            </button>
-            <button
-              className="pointer-events-auto mr-[-8px] rounded-full bg-bg-secondary/80 border border-border text-text-secondary px-3 py-2 shadow hover:bg-bg-secondary"
-              onClick={() => scrollCarouselBy(servicesCarouselRef, 'right')}
-            >
-              ›
-            </button>
-          </div>
+
+              {/* Informações da paginação */}
+              {totalPages > 1 && (
+                <div className="text-center text-sm text-text-muted">
+                  Mostrando {startIndex + 1} - {Math.min(endIndex, servicesOfBarber.length)} de {servicesOfBarber.length} serviços
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Seção de combos removida */}
