@@ -177,7 +177,7 @@ const BarbeirosPage: React.FC = () => {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-text-primary">Barbeiros</h1>
+            <h1 className="text-3xl font-bold text-primary-light">Barbeiros</h1>
             <Button variant="primary" onClick={openAddBarber}>Adicionar Barbeiro</Button>
           </div>
 

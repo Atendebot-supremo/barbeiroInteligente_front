@@ -10,7 +10,8 @@
   --color-bg-primary: #0f172a; /* slate-900 */
 
   /* Texto Principal */
-  --color-text-primary: #f1f5f9; /* stone-100 */
+  --color-text-primary: #f1f5f9; /* stone-100 - para usar sobre fundo escuro */
+  --color-text-primary-light: #1e293b; /* slate-800 - para usar sobre fundo claro */
 
   --color-text-primary-dark: rgba(0, 0, 0, 0.5);
 
@@ -42,6 +43,15 @@
 }
 
 /* Tema claro por padrão; você pode ajustar um tema escuro depois se quiser */
+
+/* Classes utilitárias para texto */
+.text-primary-dark {
+  color: var(--color-text-primary-light);
+}
+
+.text-primary-light {
+  color: var(--color-text-primary);
+}
 
 /* Ocultar scrollbar para carrosséis (mantendo o scroll funcional) */
 .carousel {

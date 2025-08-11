@@ -10,6 +10,7 @@ import ServicosPage from '../pages/ServicosPage';
 import AgendaPage from '../pages/AgendaPage';
 import BarbeirosPage from '../pages/BarbeirosPage';
 import ConfiguracoesPage from '../pages/ConfiguracoesPage';
+import HorariosPage from '../pages/HorariosPage';
 import TestApiPage from '../pages/TestApiPage';
 
 export const AppRoutes = () => {
@@ -24,6 +25,7 @@ export const AppRoutes = () => {
       <Route path="/servicos" element={<ProtectedRoute><ServicosPage /></ProtectedRoute>} />
       <Route path="/barbeiros" element={<ProtectedRoute><BarbeirosPage /></ProtectedRoute>} />
       <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
+      <Route path="/horarios" element={<ProtectedRoute><HorariosPage /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><ConfiguracoesPage /></ProtectedRoute>} />
       <Route path="/test-api" element={<TestApiPage />} />
 

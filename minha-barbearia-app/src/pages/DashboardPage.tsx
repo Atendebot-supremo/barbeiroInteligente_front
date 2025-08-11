@@ -16,7 +16,7 @@ const DashboardPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-primary-light">Dashboard</h1>
           </div>
         </div>
 
@@ -33,7 +33,7 @@ const DashboardPage: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-text-secondary">Agendamentos Hoje</p>
-                <p className="text-2xl font-semibold text-text-primary">8</p>
+                <p className="text-2xl font-semibold text-primary-dark">8</p>
               </div>
             </div>
           </Card>
@@ -49,7 +49,7 @@ const DashboardPage: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-text-secondary">Receita do Mês</p>
-                <p className="text-2xl font-semibold text-text-primary">R$ 4.520</p>
+                <p className="text-2xl font-semibold text-primary-dark">R$ 4.520</p>
               </div>
             </div>
           </Card>
@@ -65,7 +65,7 @@ const DashboardPage: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-text-secondary">Clientes Ativos</p>
-                <p className="text-2xl font-semibold text-text-primary">127</p>
+                <p className="text-2xl font-semibold text-primary-dark">127</p>
               </div>
             </div>
           </Card>
@@ -81,7 +81,7 @@ const DashboardPage: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-text-secondary">Barbeiros Ativos</p>
-                <p className="text-2xl font-semibold text-text-primary">3</p>
+                <p className="text-2xl font-semibold text-primary-dark">3</p>
               </div>
             </div>
           </Card>
@@ -90,7 +90,7 @@ const DashboardPage: React.FC = () => {
         {/* Recent Activity */}
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-4">Próximos Agendamentos</h2>
+            <h2 className="text-xl font-semibold text-primary-dark mb-4">Próximos Agendamentos</h2>
             <div className="space-y-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
@@ -98,7 +98,7 @@ const DashboardPage: React.FC = () => {
                     <span className="text-sm font-medium text-blue-600">{14 + i}:00</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-text-primary">Cliente {i + 1}</p>
+                    <p className="text-sm font-medium text-primary-dark">Cliente {i + 1}</p>
                     <p className="text-xs text-text-secondary">Corte + Barba</p>
                   </div>
                   <div className="text-xs text-text-secondary">João</div>
@@ -108,7 +108,7 @@ const DashboardPage: React.FC = () => {
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-4">Serviços Populares</h2>
+            <h2 className="text-xl font-semibold text-primary-dark mb-4">Serviços Populares</h2>
             <div className="space-y-4">
               {[
                 { name: 'Corte Masculino', count: 45, percentage: 85 },
@@ -118,7 +118,7 @@ const DashboardPage: React.FC = () => {
               ].map((service, i) => (
                 <div key={i} className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="font-medium text-text-primary">{service.name}</span>
+                    <span className="font-medium text-primary-dark">{service.name}</span>
                     <span className="text-text-secondary">{service.count}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">

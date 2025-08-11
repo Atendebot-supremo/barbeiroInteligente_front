@@ -144,6 +144,23 @@ const Header: React.FC = () => {
                 <span>Barbeiros</span>
               </div>
             </Link>
+            
+            <Link 
+              to="/horarios" 
+              className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+                isActiveRoute('/horarios') 
+                  ? 'text-white shadow-lg' 
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
+              }`}
+              style={isActiveRoute('/horarios') ? { backgroundColor: 'var(--color-primary)' } : {}}
+            >
+              <div className="flex items-center space-x-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Horários</span>
+              </div>
+            </Link>
           </nav>
 
           {/* Menu do usuário à direita */}

@@ -48,7 +48,7 @@ const LoginPage = () => {
                e.currentTarget.style.display = 'none';
              }}
            />
-          <h2 className="mt-6 text-3xl font-extrabold text-text-primary">
+          <h2 className="mt-6 text-3xl font-extrabold text-primary-light">
             Entre na sua conta
           </h2>
           <p className="mt-2 text-sm text-text-muted">

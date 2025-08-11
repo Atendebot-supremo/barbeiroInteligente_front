@@ -16,7 +16,7 @@ const ConfiguracoesPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-text-primary">Configurações</h1>
+            <h1 className="text-3xl font-bold text-primary-light">Configurações</h1>
             <p className="text-text-secondary">Gerencie as configurações do seu sistema</p>
           </div>
         </div>
@@ -24,7 +24,7 @@ const ConfiguracoesPage: React.FC = () => {
         {/* Content */}
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-4">Perfil</h2>
+            <h2 className="text-xl font-semibold text-primary-dark mb-4">Perfil</h2>
             <p className="text-text-secondary mb-4">Configurações do seu perfil de usuário</p>
             <div className="space-y-3">
               <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -34,7 +34,7 @@ const ConfiguracoesPage: React.FC = () => {
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-4">Barbearia</h2>
+            <h2 className="text-xl font-semibold text-primary-dark mb-4">Barbearia</h2>
             <p className="text-text-secondary mb-4">Configurações da sua barbearia</p>
             <div className="space-y-3">
               <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -44,7 +44,7 @@ const ConfiguracoesPage: React.FC = () => {
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-4">Notificações</h2>
+            <h2 className="text-xl font-semibold text-primary-dark mb-4">Notificações</h2>
             <p className="text-text-secondary mb-4">Configure como você recebe notificações</p>
             <div className="space-y-3">
               <div className="h-4 bg-gray-200 rounded animate-pulse w-4/5"></div>
@@ -54,7 +54,7 @@ const ConfiguracoesPage: React.FC = () => {
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-4">Sistema</h2>
+            <h2 className="text-xl font-semibold text-primary-dark mb-4">Sistema</h2>
             <p className="text-text-secondary mb-4">Configurações gerais do sistema</p>
             <div className="space-y-3">
               <div className="h-4 bg-gray-200 rounded animate-pulse w-2/3"></div>
@@ -66,7 +66,7 @@ const ConfiguracoesPage: React.FC = () => {
 
         {/* Placeholder for future sections */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-text-primary mb-4">Configurações Avançadas</h2>
+          <h2 className="text-xl font-semibold text-primary-dark mb-4">Configurações Avançadas</h2>
           <p className="text-text-secondary mb-6">Em breve, mais opções de configuração estarão disponíveis aqui.</p>
           <div className="text-center py-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">

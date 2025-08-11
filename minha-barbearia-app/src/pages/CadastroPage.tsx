@@ -82,7 +82,7 @@ const CadastroPage = () => {
               e.currentTarget.style.display = 'none';
             }}
           />
-          <h2 className="mt-6 text-3xl font-extrabold text-text-primary">Crie sua conta</h2>
+          <h2 className="mt-6 text-3xl font-extrabold text-primary-light">Crie sua conta</h2>
           <p className="text-sm text-text-muted">Etapa 0{step} de 03</p>
           <p className="mt-2 text-sm text-text-muted">
             Já tem uma conta?{' '}
@@ -177,7 +177,7 @@ const CadastroPage = () => {
             {step === 3 && (
               <>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-text-primary">Pagamento</h3>
+                  <h3 className="text-lg font-semibold text-primary-dark">Pagamento</h3>
                   <p className="text-sm text-text-muted">Configuração de pagamento será feita posteriormente.</p>
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     <div className="border border-border rounded-md p-3 text-center">PIX</div>

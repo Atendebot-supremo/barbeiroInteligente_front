@@ -223,7 +223,7 @@ const ServicosPage = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="text-3xl font-bold text-text-primary">Serviços</h1>
+          <h1 className="text-3xl font-bold text-primary-light">Serviços</h1>
           <div className="flex items-center gap-3">
             <div>
               <select

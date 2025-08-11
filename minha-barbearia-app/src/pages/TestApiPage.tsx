@@ -86,7 +86,7 @@ const TestApiPage: React.FC = () => {
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-text-primary">Teste de Conectividade da API</h1>
+          <h1 className="text-3xl font-bold text-primary-light">Teste de Conectividade da API</h1>
           <Button variant="primary" onClick={runAllTests}>
             Executar Todos os Testes
           </Button>

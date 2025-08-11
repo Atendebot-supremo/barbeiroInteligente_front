@@ -36,11 +36,11 @@ export interface BarberProduct {
 }
 
 export interface BarberSchedule {
-  id?: string;
+  id?: string;        // idSchedule da API
   idBarber: string;
-  startHour: string; // "09:00"
-  endHour: string;   // "18:00"
-  day: string;       // "segunda-feira", "terça-feira", etc.
+  startHour: string;  // formato timetz: "13:33:00+00"
+  endHour: string;    // formato timetz: "15:33:00+00"
+  day: string;        // "segunda-feira", "terça-feira", etc.
   createdAt?: string;
   updatedAt?: string;
 }
@@ -295,7 +295,73 @@ export const scheduleService = {
   // Listar todos os horários
   getAll: async (): Promise<BarberSchedule[]> => {
     const response = await api.get('/barber-schedules');
-    return response.data;
+    console.log('📅 Resposta da API - getAll schedules:', response.data);
+    
+    // Verificar formato da resposta
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data.map((schedule: any) => ({
+        id: schedule.idSchedule,        // ✅ Usar idSchedule da API
+        idBarber: schedule.idBarber,
+        startHour: schedule.startHour,
+        endHour: schedule.endHour,
+        day: schedule.day,
+        createdAt: schedule.createdAt,
+        updatedAt: schedule.updatedAt,
+      }));
+    } else if (Array.isArray(response.data)) {
+      return response.data.map((schedule: any) => ({
+        id: schedule.idSchedule || schedule.id,  // ✅ Garantir idSchedule
+        idBarber: schedule.idBarber,
+        startHour: schedule.startHour,
+        endHour: schedule.endHour,
+        day: schedule.day,
+        createdAt: schedule.createdAt,
+        updatedAt: schedule.updatedAt,
+      }));
+    } else {
+      console.warn('Formato inesperado da resposta de horários:', response.data);
+      return [];
+    }
+  },
+
+  // Buscar horários por barbeiro
+  getByBarber: async (barberId: string): Promise<BarberSchedule[]> => {
+    const allSchedules = await scheduleService.getAll();
+    return allSchedules.filter(schedule => schedule.idBarber === barberId);
+  },
+
+  // Criar novo horário
+  create: async (data: {
+    idBarber: string;
+    startHour: string; // formato ISO com timezone
+    endHour: string;   // formato ISO com timezone
+    day: string;       // nome do dia da semana
+  }): Promise<BarberSchedule> => {
+    console.log('📅 Criando horário:', data);
+    const response = await api.post('/barber-schedules', data);
+    console.log('✅ Horário criado - resposta completa:', response.data);
+    
+    // Normalizar resposta para garantir que o ID está correto
+    const schedule = response.data?.data || response.data;
+    const normalizedSchedule = {
+      id: schedule.idSchedule || schedule.id,  // ✅ Garantir idSchedule
+      idBarber: schedule.idBarber,
+      startHour: schedule.startHour,
+      endHour: schedule.endHour,
+      day: schedule.day,
+      createdAt: schedule.createdAt,
+      updatedAt: schedule.updatedAt,
+    };
+    
+    console.log('✅ Horário normalizado:', normalizedSchedule);
+    return normalizedSchedule;
+  },
+
+  // Deletar horário
+  delete: async (id: string): Promise<void> => {
+    console.log('🗑️ Deletando horário:', id);
+    await api.delete(`/barber-schedules/${id}`);
+    console.log('✅ Horário deletado');
   },
 
   // Buscar horário por ID
@@ -304,21 +370,10 @@ export const scheduleService = {
     return response.data;
   },
 
-  // Criar novo horário
-  create: async (data: Partial<BarberSchedule>): Promise<BarberSchedule> => {
-    const response = await api.post('/barber-schedules', data);
-    return response.data;
-  },
-
   // Atualizar horário
   update: async (id: string, data: Partial<BarberSchedule>): Promise<BarberSchedule> => {
     const response = await api.put(`/barber-schedules/${id}`, data);
     return response.data;
-  },
-
-  // Deletar horário
-  delete: async (id: string): Promise<void> => {
-    await api.delete(`/barber-schedules/${id}`);
   },
 
   // Buscar slots disponíveis
@@ -333,8 +388,7 @@ export const scheduleService = {
 
   // Buscar horários semanais do barbeiro
   getWeeklySchedule: async (barberId: string): Promise<BarberSchedule[]> => {
-    const response = await api.get(`/barber-schedules/weekly/${barberId}`);
-    return response.data;
+    return await scheduleService.getByBarber(barberId);
   },
 };
 

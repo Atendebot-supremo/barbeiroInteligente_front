@@ -348,7 +348,7 @@ const AgendaPage: React.FC = () => {
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-text-primary">
+            <h1 className="text-3xl font-bold text-primary-light">
               Agenda ({
                 calendarView === 'dayGridMonth' ? 'Mensal' :
                 calendarView === 'timeGridWeek' ? 'Semanal' :
