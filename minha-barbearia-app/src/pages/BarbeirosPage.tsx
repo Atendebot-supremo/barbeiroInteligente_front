@@ -5,24 +5,25 @@ import type { Barbeiro, Servico, Combo } from '../types';
 import { loadCombos, saveCombos } from '../services/localStore';
 import { barbershopService } from '../services/realApiService';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const BarbeirosPage: React.FC = () => {
   const { user } = useAuth();
+  const { showNotification } = useNotification();
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [services, setServices] = useState<Servico[]>([]);
   const [combos, setCombos] = useState<Combo[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
+  const loadData = async () => {
       try {
         setLoading(true);
         
         if (!user?.idBarbershop) throw new Error('Barbearia não identificada');
         // Carregar barbeiros da barbearia
         const barbersFromApi = await barbershopService.getBarbers(user.idBarbershop);
-        const barbeirosFormatted: Barbeiro[] = barbersFromApi.map(barber => ({
-          idBarber: (barber as any).id || (barber as any).idBarber || '',
+        const barbeirosFormatted: Barbeiro[] = barbersFromApi.map((barber, index) => ({
+          idBarber: (barber as any).id || (barber as any).idBarber || `temp-${index}`,
           name: (barber as any).name,
           phone: (barber as any).phone,
         }));
@@ -30,8 +31,8 @@ const BarbeirosPage: React.FC = () => {
 
         // Carregar serviços da barbearia para contagem
         const servicesRaw = await barbershopService.getServices(user.idBarbershop);
-        const servicesFormatted: Servico[] = servicesRaw.map(product => ({
-          idProduct: (product as any).id || (product as any).idProduct || '',
+        const servicesFormatted: Servico[] = servicesRaw.map((product, index) => ({
+          idProduct: (product as any).id || (product as any).idProduct || `service-temp-${index}`,
           idBarber: (product as any).idBarber,
           name: (product as any).name,
           price: (product as any).price,
@@ -53,8 +54,9 @@ const BarbeirosPage: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    };
+  };
 
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -76,6 +78,12 @@ const BarbeirosPage: React.FC = () => {
   const [barberName, setBarberName] = useState('');
 
   const openAddBarber = () => {
+    // Verificar limitação do plano Free
+    if (user?.planType === 'Free' && barbers.length >= 1) {
+      showNotification('warning', 'Plano Free permite apenas 1 barbeiro. Faça upgrade para o Plano Pro para adicionar mais barbeiros.');
+      return;
+    }
+    
     setEditingBarberId(null);
     setBarberName('');
     setBarberModalOpen(true);
@@ -104,13 +112,26 @@ const BarbeirosPage: React.FC = () => {
         updatedBarber = await barbershopService.createBarber(user.idBarbershop, barberData);
       }
 
+      console.log('Resposta da API:', updatedBarber);
+
       // Converter para formato esperado pelo frontend (suportando envelope { success, data })
       const payload = (updatedBarber && (updatedBarber as any).data) ? (updatedBarber as any).data : updatedBarber;
+      
+      // Garantir que sempre temos um ID válido
+      let barberId = (payload && (payload as any).id) || editingBarberId;
+      if (!barberId) {
+        // Se ainda não temos ID, usar timestamp como fallback
+        barberId = `new-barber-${Date.now()}`;
+        console.warn('ID do barbeiro não retornado pela API, usando fallback:', barberId);
+      }
+      
       const formattedBarber: Barbeiro = {
-        idBarber: (payload && (payload as any).id) || editingBarberId || '',
+        idBarber: barberId,
         name: (payload && (payload as any).name) || barberName.trim(),
         phone: (payload as any)?.phone,
       };
+
+      console.log('Barbeiro formatado:', formattedBarber);
 
       // Atualizar lista local
       const updated = editingBarberId
@@ -118,6 +139,15 @@ const BarbeirosPage: React.FC = () => {
         : [formattedBarber, ...barbers];
       
       setBarbers(updated);
+      
+      // Se foi criação e não temos ID da API, recarregar dados para garantir IDs corretos
+      if (!editingBarberId && !payload?.id) {
+        console.log('Recarregando dados para sincronizar IDs...');
+        setTimeout(() => {
+          loadData();
+        }, 500);
+      }
+      
       // Resetar formulário e fechar modal
       setBarberName('');
       setEditingBarberId(null);
@@ -138,9 +168,11 @@ const BarbeirosPage: React.FC = () => {
   const confirmDeleteBarber = async () => {
     if (!deletingBarberId) return;
     try {
+      console.log('Deletando barbeiro ID:', deletingBarberId);
       // Deletar da API
       if (!user?.idBarbershop) throw new Error('Barbearia não identificada');
       await barbershopService.deleteBarber(user.idBarbershop, deletingBarberId);
+      console.log('Barbeiro deletado com sucesso');
       
       // Atualizar listas locais
       const updatedBarbers = barbers.filter(b => b.idBarber !== deletingBarberId);

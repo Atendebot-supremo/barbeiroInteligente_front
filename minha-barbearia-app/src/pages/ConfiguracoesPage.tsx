@@ -354,7 +354,7 @@ const ConfiguracoesPage: React.FC = () => {
               <h2 className="text-xl font-semibold text-primary-dark">Status da Conta</h2>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="text-center">
                 <div className="flex flex-col items-center space-y-2">
                   <p className="font-medium text-primary-dark">Status da Assinatura</p>
@@ -368,6 +368,20 @@ const ConfiguracoesPage: React.FC = () => {
                     {barbershopData?.status || 'Ativo'}
                   </span>
                   <p className="text-sm text-text-muted">Status atual da sua conta</p>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <div className="flex flex-col items-center space-y-2">
+                  <p className="font-medium text-primary-dark">Plano Atual</p>
+                  <span className={`px-4 py-2 rounded-full text-sm font-medium ${
+                    (barbershopData?.planType || user?.planType) === 'Pro' 
+                      ? 'bg-purple-100 text-purple-800' 
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {barbershopData?.planType || user?.planType || 'Free'}
+                  </span>
+                  <p className="text-sm text-text-muted">Seu plano de assinatura</p>
                 </div>
               </div>
 

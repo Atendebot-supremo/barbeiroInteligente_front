@@ -6,9 +6,11 @@ import { Button, Card, Loading, Modal, Input } from '../components/ui';
 import { formatCurrency, formatDuration } from '../utils/format';
 import { loadServices, saveServices } from '../services/localStore';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const ServicosPage = () => {
   const { user } = useAuth();
+  const { showNotification } = useNotification();
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
   const [services, setServices] = useState<Servico[]>([]);
@@ -77,6 +79,12 @@ const ServicosPage = () => {
   const [serviceDesc, setServiceDesc] = useState('');
 
   const openAddService = useCallback(() => {
+    // Verificar limitação do plano Free
+    if (user?.planType === 'Free' && services.length >= 4) {
+      showNotification('warning', 'Plano Free permite apenas 4 serviços. Faça upgrade para o Plano Pro para adicionar mais serviços.');
+      return;
+    }
+    
     setEditingServiceId(null);
     setServiceName('');
     setServicePrice(0);
@@ -84,7 +92,7 @@ const ServicosPage = () => {
     setServiceDesc('');
     setServiceBarberId(selectedBarberId || barbers[0]?.idBarber || '');
     setServiceModalOpen(true);
-  }, [selectedBarberId, barbers]);
+  }, [selectedBarberId, barbers, user?.planType, services.length, showNotification]);
 
   const openEditService = useCallback((svc: Servico) => {
     setEditingServiceId(svc.idProduct);

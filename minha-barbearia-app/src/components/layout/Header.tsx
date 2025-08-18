@@ -80,17 +80,33 @@ const Header: React.FC = () => {
             <Link 
               to="/dashboard" 
               className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
-                isActiveRoute('/dashboard') 
-                  ? 'text-white shadow-lg' 
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
+                user?.planType === 'Free' 
+                  ? 'text-slate-400 cursor-not-allowed' 
+                  : isActiveRoute('/dashboard') 
+                    ? 'text-white shadow-lg' 
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50 hover:shadow-lg'
               }`}
-              style={isActiveRoute('/dashboard') ? { backgroundColor: 'var(--color-primary)' } : {}}
+              style={isActiveRoute('/dashboard') && user?.planType !== 'Free' ? { backgroundColor: 'var(--color-primary)' } : {}}
+              onClick={(e) => {
+                if (user?.planType === 'Free') {
+                  e.preventDefault();
+                }
+              }}
             >
               <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+                {user?.planType === 'Free' ? (
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                )}
                 <span>Dashboard</span>
+                {user?.planType === 'Free' && (
+                  <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">Pro</span>
+                )}
               </div>
             </Link>
             
@@ -164,7 +180,7 @@ const Header: React.FC = () => {
           </nav>
 
           {/* Menu do usuário à direita */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 ml-8">
             {user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -191,8 +207,18 @@ const Header: React.FC = () => {
                     <div className="px-4 py-3 border-b border-slate-600/30">
                       <p className="text-sm font-semibold text-white">{user?.barbershop || 'Usuário'}</p>
                       <p className="text-xs text-slate-400">{user?.email || 'admin@barbeiro.com'}</p>
-                      <div className="mt-2 px-3 py-1 rounded-lg" style={{ backgroundColor: 'hsl(var(--color-primary) / 0.2)' }}>
-                        <span className="text-xs font-medium" style={{ color: 'hsl(var(--color-primary))' }}>Plano Premium</span>
+                      <div className={`mt-2 px-3 py-1 rounded-lg ${
+                        user?.planType === 'Pro' 
+                          ? 'bg-purple-100/20' 
+                          : 'bg-amber-100/20'
+                      }`}>
+                        <span className={`text-xs font-medium ${
+                          user?.planType === 'Pro' 
+                            ? 'text-purple-300' 
+                            : 'text-amber-300'
+                        }`}>
+                          {user?.planType === 'Pro' ? 'Plano Premium' : 'Plano Free'}
+                        </span>
                       </div>
                     </div>
                     
@@ -251,6 +277,19 @@ const Header: React.FC = () => {
                   Cadastro
                 </Link>
               </div>
+            )}
+            
+            {/* Botão de Upgrade para plano Free */}
+            {user?.planType === 'Free' && (
+              <Link
+                to="/configuracoes"
+                className="hidden lg:flex items-center space-x-2 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span>Upgrade</span>
+              </Link>
             )}
           </div>
         </div>

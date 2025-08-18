@@ -2,6 +2,25 @@
 
 // Tipos baseados nos ENUMs do banco de dados
 export type StatusAgendamento = 'Agendado' | 'Confirmado' | 'Concluido' | 'Cancelado';
+
+// Tipos de planos
+export type TipoPlano = 'free' | 'pro';
+
+export interface PlanoLimites {
+  barbeiros: number;
+  servicos: number;
+  agendamentos: number;
+}
+
+export interface Plano {
+  tipo: TipoPlano;
+  nome: string;
+  preco: number;
+  descricao: string;
+  limites: PlanoLimites;
+  recursos: string[];
+}
+
 export type StatusBarbearia = 'Ativo' | 'Inativo' | 'Inadimplente' | 'Cancelado';
 
 // Interface baseada na tabela 'barberProducts'
@@ -37,6 +56,7 @@ export interface Barbearia extends BaseEntity {
     cnpj?: string;      // CNPJ da empresa
     instanceZapi?: string; // Configuração WhatsApp
     status: StatusBarbearia;
+    planType?: string;  // Tipo do plano (Free, Pro)
 }
 
 // Profissional/barbeiro

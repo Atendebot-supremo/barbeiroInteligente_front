@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../components/ui';
+import { Card, Button } from '../components/ui';
 import { Calendar, Users, Settings, Plus, MessageCircle, MessageCircleOff, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { appointmentService, productService, barberService } from '../services/realApiService';
+import { barbershopService } from '../services/realApiService';
 import type { Agendamento, Servico, Barbeiro } from '../types';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  
+  // Verificar se é plano Free (Dashboard indisponível)
+  const isFreeplan = user?.planType === 'Free';
   
   // Estados para dados reais da API
   const [topService, setTopService] = useState<{ name: string; count: number; percentage: number } | null>(null);
@@ -20,49 +23,75 @@ const DashboardPage: React.FC = () => {
 
 
 
-  // Função para buscar todos os agendamentos de todos os barbeiros
-  const fetchAllAppointments = async (barbersMapping: { [key: string]: Barbeiro }): Promise<Agendamento[]> => {
+  // Função para buscar todos os agendamentos da barbearia
+  const fetchAllAppointments = async (): Promise<Agendamento[]> => {
     try {
-      const barberIds = Object.keys(barbersMapping);
-      if (barberIds.length === 0) return [];
-
-      // Buscar agendamentos de todos os barbeiros
-      const appointmentPromises = barberIds.map(barberId => 
-        appointmentService.getByBarber(barberId).catch(() => [])
-      );
+      if (!user?.idBarbershop) {
+        console.log('❌ Dashboard: ID da barbearia não encontrado');
+        return [];
+      }
       
-      const appointmentArrays = await Promise.all(appointmentPromises);
-      return appointmentArrays.flat();
+      console.log('🔍 Dashboard: Buscando agendamentos da barbearia:', user.idBarbershop);
+      
+      // Usar rota específica da barbearia
+      const response = await barbershopService.getAppointments(user.idBarbershop);
+      
+      console.log('📊 Dashboard: Agendamentos recebidos:', response);
+      
+      // Mapear para o formato esperado pelo frontend
+      const appointments = response.map((apt: any) => ({
+        idAppointment: (apt as any).id || (apt as any).idAppointment || '',
+        idBarbershop: (apt as any).idBarbershop || user.idBarbershop,
+        idBarber: (apt as any).idBarber || '',
+        idProduct: (apt as any).idProduct || '',
+        clientName: (apt as any).clientName,
+        clientPhone: (apt as any).clientPhone,
+        createdAt: (apt as any).createdAt || '',
+        updatedAt: (apt as any).updatedAt || '',
+        startOfSchedule: (apt as any).startOfSchedule,
+        status: (apt as any).status || 'Agendado',
+      }));
+      
+      console.log('📋 Dashboard: Agendamentos formatados:', appointments);
+      return appointments;
     } catch (error) {
-      console.error('Erro ao buscar agendamentos:', error);
+      console.error('❌ Dashboard: Erro ao buscar agendamentos:', error);
       return [];
     }
   };
 
   // Função para buscar serviço mais popular
-  const fetchTopService = async (barbersMapping: { [key: string]: Barbeiro }, servicesMapping: { [key: string]: Servico }) => {
+  const fetchTopService = async (servicesMapping: { [key: string]: Servico }) => {
     try {
+      console.log('🎯 Dashboard: Buscando top serviço...');
+      
       // Buscar agendamentos dos últimos 7 dias
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      console.log('📅 Dashboard: Filtro 7 dias atrás:', sevenDaysAgo);
       
-      const allAppointments = await fetchAllAppointments(barbersMapping);
+      const allAppointments = await fetchAllAppointments();
+      console.log('📊 Dashboard: Total de agendamentos:', allAppointments.length);
+      
       const recentAppointments = allAppointments.filter(apt => {
         if (!apt.createdAt) return false;
         const aptDate = new Date(apt.createdAt);
         return aptDate >= sevenDaysAgo;
       });
+      console.log('📅 Dashboard: Agendamentos dos últimos 7 dias:', recentAppointments.length);
 
       // Contar serviços
       const serviceCounts: { [key: string]: number } = {};
       recentAppointments.forEach(apt => {
         serviceCounts[apt.idProduct] = (serviceCounts[apt.idProduct] || 0) + 1;
       });
+      console.log('🔢 Dashboard: Contagem de serviços:', serviceCounts);
 
       // Encontrar o mais popular
       const topServiceId = Object.keys(serviceCounts).reduce((a, b) => 
         serviceCounts[a] > serviceCounts[b] ? a : b, ''
       );
+      console.log('🏆 Dashboard: Top service ID:', topServiceId);
 
       if (topServiceId && serviceCounts[topServiceId] > 0) {
         const service = servicesMapping[topServiceId];
@@ -70,33 +99,28 @@ const DashboardPage: React.FC = () => {
         const total = recentAppointments.length;
         const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
 
+        console.log('✅ Dashboard: Top service encontrado:', { service, count, total, percentage });
+
         setTopService({
           name: service?.name || 'Serviço',
           count,
           percentage
         });
       } else {
-        // Fallback
-        setTopService({
-          name: 'Corte + Barba',
-          count: 23,
-          percentage: 45
-        });
+        // Nenhum agendamento encontrado
+        console.log('❌ Dashboard: Nenhum agendamento nos últimos 7 dias');
+        setTopService(null);
       }
     } catch (error) {
-      console.error('Erro ao buscar top serviço:', error);
-      setTopService({
-        name: 'Corte + Barba',
-        count: 23,
-        percentage: 45
-      });
+      console.error('❌ Dashboard: Erro ao buscar top serviço:', error);
+      setTopService(null);
     }
   };
 
   // Função para buscar próximos agendamentos
-  const fetchUpcomingAppointments = async (barbersMapping: { [key: string]: Barbeiro }) => {
+  const fetchUpcomingAppointments = async () => {
     try {
-      const allAppointments = await fetchAllAppointments(barbersMapping);
+      const allAppointments = await fetchAllAppointments();
       
       // Filtrar agendamentos futuros e ordenar por data
       const upcoming = allAppointments
@@ -122,43 +146,75 @@ const DashboardPage: React.FC = () => {
   // Carregar dados iniciais
   useEffect(() => {
     const loadDashboardData = async () => {
-      if (!user?.idBarbershop) return;
+      if (!user?.idBarbershop) {
+        console.log('❌ Dashboard: User ou idBarbershop não encontrado');
+        return;
+      }
       
+      // Não carregar dados se for plano Free
+      if (isFreeplan) {
+        console.log('🔒 Dashboard: Acesso restrito para plano Free');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('🚀 Dashboard: Iniciando carregamento dos dados...');
       setLoading(true);
       
       try {
-        // Primeiro carregar barbeiros e serviços (para mapear nomes)
+        // Primeiro carregar barbeiros e serviços da barbearia específica
+        console.log('📞 Dashboard: Buscando barbeiros e serviços...');
         const [barbers, services] = await Promise.all([
-          barberService.getAll(),
-          productService.getAll()
+          barbershopService.getBarbers(user.idBarbershop),
+          barbershopService.getServices(user.idBarbershop)
         ]);
 
+        console.log('👨‍💼 Dashboard: Barbeiros recebidos:', barbers);
+        console.log('✂️ Dashboard: Serviços recebidos:', services);
+
         const barbersMapping: { [key: string]: Barbeiro } = {};
-        barbers.forEach(barber => {
-          barbersMapping[barber.idBarber] = barber;
+        barbers.forEach((barber: any) => {
+          const formattedBarber: Barbeiro = {
+            idBarber: (barber as any).id || (barber as any).idBarber,
+            name: (barber as any).name,
+            phone: (barber as any).phone,
+          };
+          barbersMapping[formattedBarber.idBarber] = formattedBarber;
         });
 
         const servicesMapping: { [key: string]: Servico } = {};
-        services.forEach(service => {
-          servicesMapping[service.idProduct] = service;
+        services.forEach((service: any) => {
+          const formattedService: Servico = {
+            idProduct: (service as any).id || (service as any).idProduct,
+            idBarber: (service as any).idBarber,
+            name: (service as any).name,
+            price: (service as any).price,
+            desc: (service as any).desc,
+            duration: (service as any).duration || 30,
+          };
+          servicesMapping[formattedService.idProduct] = formattedService;
         });
+
+        console.log('🗺️ Dashboard: Mapeamento barbeiros:', barbersMapping);
+        console.log('🗺️ Dashboard: Mapeamento serviços:', servicesMapping);
 
         setBarbersMap(barbersMapping);
         setServicesMap(servicesMapping);
 
         // Depois carregar dados que dependem dos mapeamentos
-        await fetchTopService(barbersMapping, servicesMapping);
-        await fetchUpcomingAppointments(barbersMapping);
+        await fetchTopService(servicesMapping);
+        await fetchUpcomingAppointments();
 
       } catch (error) {
-        console.error('Erro ao carregar dados do dashboard:', error);
+        console.error('❌ Dashboard: Erro ao carregar dados do dashboard:', error);
       } finally {
         setLoading(false);
+        console.log('✅ Dashboard: Carregamento finalizado');
       }
     };
 
     loadDashboardData();
-  }, [user?.idBarbershop]);
+  }, [user?.idBarbershop, isFreeplan]);
 
   // Simular verificação de conexão (WhatsApp não implementado)
   useEffect(() => {
@@ -172,6 +228,71 @@ const DashboardPage: React.FC = () => {
     };
     checkConnection();
   }, []);
+
+  // Tela de upgrade para plano Free
+  if (isFreeplan) {
+    return (
+      <div
+        className="min-h-screen"
+        style={{
+          backgroundImage: "url('/src/assets/background-simples.png')",
+          backgroundRepeat: 'repeat',
+        }}
+      >
+        <div className="max-w-4xl mx-auto p-6">
+          <header className="mb-8">
+            <h1 className="text-3xl font-bold text-primary-light">Dashboard</h1>
+            <p className="text-text-secondary mt-2">Visão geral do seu negócio</p>
+          </header>
+
+          <div className="flex justify-center items-center min-h-[60vh]">
+            <Card className="max-w-md mx-auto text-center p-8">
+              <div className="mb-6">
+                <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-primary-dark mb-2">Dashboard Indisponível</h3>
+                <p className="text-text-secondary">
+                  O Dashboard com métricas avançadas está disponível apenas no Plano Pro.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <h4 className="font-medium text-purple-800 mb-2">Plano Pro inclui:</h4>
+                  <ul className="text-sm text-purple-700 space-y-1">
+                    <li>• Dashboard com métricas em tempo real</li>
+                    <li>• Relatórios de performance</li>
+                    <li>• Análise de serviços populares</li>
+                    <li>• Barbeiros e serviços ilimitados</li>
+                    <li>• Agendamentos ilimitados</li>
+                  </ul>
+                </div>
+                
+                <Button 
+                  variant="primary" 
+                  className="w-full"
+                  onClick={() => navigate('/configuracoes')}
+                >
+                  Fazer Upgrade para Pro
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => navigate('/agenda')}
+                >
+                  Ir para Agenda
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

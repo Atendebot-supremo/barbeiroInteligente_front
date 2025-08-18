@@ -32,7 +32,7 @@ export interface ProductAPI extends Servico, BaseEntity {
 }
 
 // Interface para agendamento na API
-export interface AppointmentAPI extends Agendamento, BaseEntity {
+export interface AppointmentAPI extends Agendamento {
   id?: string;  // API usa 'id', frontend usa 'idAppointment'
 }
 
@@ -52,6 +52,21 @@ export const authApi = {
 
 // --- SERVIÇO DE BARBEARIAS ---
 export const barbershopService = {
+  // Criar nova barbearia
+  create: async (data: {
+    barbershop: string;
+    email: string;
+    password: string;
+    cnpj: string;
+    phone: string;
+    instanceZapi: string;
+    status: StatusBarbearia;
+    planType: string;
+  }): Promise<any> => {
+    const response = await api.post('/barbershop', data);
+    return response.data;
+  },
+
   // Listar todas as barbearias
   getAll: async (filters?: { search?: string; status?: string; cnpj?: string }): Promise<Barbearia[]> => {
     const params = new URLSearchParams();
@@ -81,16 +96,7 @@ export const barbershopService = {
     return response.data;
   },
 
-  // Criar nova barbearia
-  create: async (data: Partial<BarbershopAPI>): Promise<Barbearia> => {
-    console.log('🏪 Criando barbearia com dados:', data);
-    console.log('📤 Enviando POST para /barbershop');
-    
-    const response = await api.post('/barbershop', data);
-    
-    console.log('✅ Barbearia criada com sucesso:', response.data);
-    return response.data;
-  },
+
 
   // Atualizar barbearia
   update: async (id: string, data: Partial<BarbershopAPI>): Promise<Barbearia> => {
@@ -118,20 +124,26 @@ export const barbershopService = {
       duration: p.duration ?? 30,
     }));
   },
-  createService: async (barbershopId: string, data: Partial<BarberProduct>): Promise<BarberProduct> => {
+  createService: async (barbershopId: string, data: Partial<ProductAPI>): Promise<ProductAPI> => {
     const response = await api.post(`/barbershop/${barbershopId}/services`, data);
     return response.data;
   },
   updateService: async (
     barbershopId: string,
     serviceId: string,
-    data: Partial<BarberProduct>
-  ): Promise<BarberProduct> => {
+    data: Partial<ProductAPI>
+  ): Promise<ProductAPI> => {
     const response = await api.put(`/barbershop/${barbershopId}/services/${serviceId}` , data);
     return response.data;
   },
   deleteService: async (barbershopId: string, serviceId: string): Promise<void> => {
     await api.delete(`/barbershop/${barbershopId}/services/${serviceId}`);
+  },
+
+  // Agendamentos da barbearia
+  getAppointments: async (barbershopId: string): Promise<any[]> => {
+    const response = await api.get(`/barbershop/${barbershopId}/appointments`);
+    return response.data?.data || response.data || [];
   },
 
   // Barbeiros da barbearia
@@ -423,7 +435,7 @@ export const appointmentService = {
   },
 
   // Agendamentos de hoje
-  getToday: async (barbershopId: string): Promise<BarberAppointment[]> => {
+  getToday: async (barbershopId: string): Promise<AppointmentAPI[]> => {
     const response = await api.get(`/barber-appointments/today/${barbershopId}`);
     return response.data;
   },
@@ -437,7 +449,7 @@ export const dataService = {
   getServices: async (): Promise<Servico[]> => {
     const products = await productService.getAll();
     return products.map(product => ({
-      idProduct: product.id || '',
+      idProduct: product.idProduct || '',
       idBarber: product.idBarber,
       name: product.name,
       price: product.price,

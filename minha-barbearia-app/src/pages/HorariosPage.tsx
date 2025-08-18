@@ -92,19 +92,12 @@ const HorariosPage: React.FC = () => {
         // Inicializar horários vazios
         initializeEmptyHorarios();
         
-        // Dados mock de barbeiros caso a API falhe
-        const mockBarbers: Barbeiro[] = [
-          { idBarber: 'barber-1', name: 'João Silva', phone: '11999999999' },
-          { idBarber: 'barber-2', name: 'Pedro Santos', phone: '11888888888' },
-          { idBarber: 'barber-3', name: 'Carlos Lima', phone: '11777777777' }
-        ];
-
         if (user?.idBarbershop) {
           try {
             // Carregar barbeiros da API
             const barbersFromApi = await barbershopService.getBarbers(user.idBarbershop);
-            const barbeirosFormatted: Barbeiro[] = barbersFromApi.map(barber => ({
-              idBarber: (barber as any).id || (barber as any).idBarber || '',
+            const barbeirosFormatted: Barbeiro[] = barbersFromApi.map((barber, index) => ({
+              idBarber: (barber as any).id || (barber as any).idBarber || `temp-${index}`,
               name: (barber as any).name,
               phone: (barber as any).phone,
             }));
@@ -117,31 +110,25 @@ const HorariosPage: React.FC = () => {
               // Carregar horários do primeiro barbeiro
               await loadHorariosFromAPI(barbeirosFormatted[0].idBarber);
             } else {
-              // Usar mock se API retornar vazio
-              setBarbers(mockBarbers);
-              setSelectedBarberId(mockBarbers[0].idBarber);
-              console.log('📝 Usando barbeiros mock (API vazia)');
+              console.log('ℹ️ Nenhum barbeiro cadastrado');
+              setBarbers([]);
+              setSelectedBarberId('');
             }
           } catch (apiError) {
-            console.warn('⚠️ Erro na API, usando dados mock:', apiError);
-            setBarbers(mockBarbers);
-            setSelectedBarberId(mockBarbers[0].idBarber);
+            console.error('❌ Erro ao carregar barbeiros:', apiError);
+            setBarbers([]);
+            setSelectedBarberId('');
           }
         } else {
-          // Usar mock se não houver usuário logado
-          setBarbers(mockBarbers);
-          setSelectedBarberId(mockBarbers[0].idBarber);
-          console.log('📝 Usando barbeiros mock (sem usuário)');
+          console.log('⚠️ Usuário não identificado');
+          setBarbers([]);
+          setSelectedBarberId('');
         }
         
       } catch (error) {
         console.error('❌ Erro geral ao carregar dados:', error);
-        // Garantir que sempre temos dados para mostrar
-        const fallbackBarbers: Barbeiro[] = [
-          { idBarber: 'barber-fallback', name: 'Barbeiro Padrão', phone: '11999999999' }
-        ];
-        setBarbers(fallbackBarbers);
-        setSelectedBarberId(fallbackBarbers[0].idBarber);
+        setBarbers([]);
+        setSelectedBarberId('');
         initializeEmptyHorarios();
       } finally {
         setLoading(false);
@@ -424,25 +411,47 @@ const HorariosPage: React.FC = () => {
             <div className="space-y-1">
               <h1 className="text-3xl font-bold text-primary-light">Horários de Trabalho</h1>
             </div>
-            <div className="flex items-center gap-3">
-              <div>
-                <select
-                  id="barber-select"
-                  value={selectedBarberId}
-                  onChange={(e) => setSelectedBarberId(e.target.value)}
-                  className="w-56 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary border-border bg-white"
-                >
-                  {barbers.map(b => (
-                    <option key={b.idBarber} value={b.idBarber}>{b.name}</option>
-                  ))}
-                </select>
+            {barbers.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div>
+                  <select
+                    id="barber-select"
+                    value={selectedBarberId}
+                    onChange={(e) => setSelectedBarberId(e.target.value)}
+                    className="w-56 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary border-border bg-white"
+                  >
+                    {barbers.map(b => (
+                      <option key={b.idBarber} value={b.idBarber}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-
-            </div>
+            )}
           </div>
 
+          {barbers.length === 0 && (
+            <Card className="bg-bg-secondary text-text-secondary border border-border">
+              <div className="text-center py-12">
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <h3 className="text-lg font-medium text-primary-dark mb-2">Nenhum barbeiro cadastrado</h3>
+                <p className="text-text-muted mb-4">
+                  É necessário ter barbeiros cadastrados para configurar horários de trabalho.
+                </p>
+                <Button 
+                  variant="primary" 
+                  onClick={() => window.location.href = '/barbeiros'}
+                >
+                  Cadastrar Barbeiros
+                </Button>
+              </div>
+            </Card>
+          )}
+
           {/* Grid de dias da semana */}
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {barbers.length > 0 && (
+            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
             {DIAS_SEMANA.map(dia => {
               const periodos = getPeriodosDia(dia.key);
               const temPeriodos = periodos.length > 0;
@@ -560,7 +569,8 @@ const HorariosPage: React.FC = () => {
                 </Card>
               );
             })}
-          </div>
+            </div>
+          )}
 
 
         </div>
