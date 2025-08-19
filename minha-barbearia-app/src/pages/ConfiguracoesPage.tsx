@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, Button, Input, Modal } from '../components/ui';
 import { WhatsAppModal } from '../components/WhatsAppModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +10,7 @@ import type { Barbearia } from '../types';
 import { Bell, User, Store, AlertTriangle, Save, Edit3, Trash2, ArrowLeft, MessageCircle, MessageCircleOff, Settings } from 'lucide-react';
 
 const ConfiguracoesPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user, logout, refreshUserData } = useAuth();
   const { success: showSuccess, error: showError, warning: showWarning } = useNotification();
   const { whatsappStatus } = useWhatsApp();
@@ -417,55 +419,99 @@ const ConfiguracoesPage: React.FC = () => {
               <div className="flex items-center gap-3 mb-4">
                 <MessageCircle className="w-6 h-6 text-green-600" />
                 <h2 className="text-xl font-semibold text-primary-dark">WhatsApp</h2>
+                {user?.planType === 'Pro' && (
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Pro</span>
+                )}
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-primary-dark">Status da Conexão</p>
-                    <p className="text-sm text-text-muted">
-                      {whatsappStatus.status === 'connected' ? 'Conectado e funcionando' :
-                       whatsappStatus.status === 'connecting' ? 'Conectando...' :
-                       whatsappStatus.status === 'error' ? 'Erro na conexão' :
-                       'Desconectado'}
+              {user?.planType === 'Free' ? (
+                // Versão bloqueada para plano Free
+                <div className="space-y-4">
+                  <div className="text-center p-6 bg-gray-50 rounded-lg">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Recurso Exclusivo Pro
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      A integração com WhatsApp está disponível apenas no Plano Pro. 
+                      Receba notificações automáticas de agendamentos e gerencie sua comunicação.
                     </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {whatsappStatus.status === 'connected' ? (
-                      <MessageCircle className="w-5 h-5 text-green-600" />
-                    ) : whatsappStatus.status === 'connecting' ? (
-                      <div className="w-5 h-5 animate-spin rounded-full border-2 border-yellow-600 border-t-transparent"></div>
-                    ) : (
-                      <MessageCircleOff className="w-5 h-5 text-red-600" />
-                    )}
-                    <span className={`text-sm font-medium ${
-                      whatsappStatus.status === 'connected' ? 'text-green-600' :
-                      whatsappStatus.status === 'connecting' ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {whatsappStatus.status === 'connected' ? 'Conectado' :
-                       whatsappStatus.status === 'connecting' ? 'Conectando' :
-                       whatsappStatus.status === 'error' ? 'Erro' :
-                       'Desconectado'}
-                    </span>
+                    
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                      <h4 className="font-medium text-purple-800 mb-2">Com o Plano Pro você terá:</h4>
+                      <ul className="text-sm text-purple-700 space-y-1 text-left">
+                        <li>• Notificações automáticas de agendamentos</li>
+                        <li>• Confirmações e lembretes via WhatsApp</li>
+                        <li>• Comunicação direta com clientes</li>
+                        <li>• Integração completa com Evolution API</li>
+                      </ul>
+                    </div>
+                    
+                    <Button 
+                      onClick={() => navigate('/upgrade')}
+                      className="bg-purple-600 text-white hover:bg-purple-700 border-purple-600 hover:border-purple-700 flex items-center mx-auto"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Fazer Upgrade para Pro
+                    </Button>
                   </div>
                 </div>
+              ) : (
+                // Versão completa para plano Pro
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-primary-dark">Status da Conexão</p>
+                      <p className="text-sm text-text-muted">
+                        {whatsappStatus.status === 'connected' ? 'Conectado e funcionando' :
+                         whatsappStatus.status === 'connecting' ? 'Conectando...' :
+                         whatsappStatus.status === 'error' ? 'Erro na conexão' :
+                         'Desconectado'}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {whatsappStatus.status === 'connected' ? (
+                        <MessageCircle className="w-5 h-5 text-green-600" />
+                      ) : whatsappStatus.status === 'connecting' ? (
+                        <div className="w-5 h-5 animate-spin rounded-full border-2 border-yellow-600 border-t-transparent"></div>
+                      ) : (
+                        <MessageCircleOff className="w-5 h-5 text-red-600" />
+                      )}
+                      <span className={`text-sm font-medium ${
+                        whatsappStatus.status === 'connected' ? 'text-green-600' :
+                        whatsappStatus.status === 'connecting' ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {whatsappStatus.status === 'connected' ? 'Conectado' :
+                         whatsappStatus.status === 'connecting' ? 'Conectando' :
+                         whatsappStatus.status === 'error' ? 'Erro' :
+                         'Desconectado'}
+                      </span>
+                    </div>
+                  </div>
 
-                <div className="pt-4 border-t border-border">
-                  <Button
-                    onClick={() => setShowWhatsAppModal(true)}
-                    className={`w-full flex items-center justify-center transition-colors duration-200 ${
-                      whatsappStatus.status === 'connected' 
-                        ? 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400' 
-                        : 'bg-green-600 text-white hover:bg-green-700 border-green-600 hover:border-green-700'
-                    }`}
-                    variant={whatsappStatus.status === 'connected' ? 'outline' : 'primary'}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    {whatsappStatus.status === 'connected' ? 'Gerenciar Conexão' : 'Conectar WhatsApp'}
-                  </Button>
+                  <div className="pt-4 border-t border-border">
+                    <Button
+                      onClick={() => setShowWhatsAppModal(true)}
+                      className={`w-full flex items-center justify-center transition-colors duration-200 ${
+                        whatsappStatus.status === 'connected' 
+                          ? 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400' 
+                          : 'bg-green-600 text-white hover:bg-green-700 border-green-600 hover:border-green-700'
+                      }`}
+                      variant={whatsappStatus.status === 'connected' ? 'outline' : 'primary'}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      {whatsappStatus.status === 'connected' ? 'Gerenciar Conexão' : 'Conectar WhatsApp'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </Card>
 

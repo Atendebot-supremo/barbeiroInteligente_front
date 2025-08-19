@@ -40,6 +40,12 @@ export const useWhatsAppConnection = (barbershopId: string) => {
 
   // Conectar ao WebSocket
   const connect = useCallback(() => {
+    // Não conectar se barbershopId estiver vazio
+    if (!barbershopId) {
+      console.log('🚫 WhatsApp: barbershopId vazio, não conectando');
+      return () => {}; // Retornar função de cleanup vazia
+    }
+
     if (wsServiceRef.current) {
       wsServiceRef.current.disconnect();
     }
@@ -115,11 +121,16 @@ export const useWhatsAppConnection = (barbershopId: string) => {
 
   // Solicitar nova conexão WhatsApp
   const requestConnection = useCallback(() => {
+    if (!barbershopId) {
+      console.log('🚫 WhatsApp: barbershopId vazio, não solicitando conexão');
+      return;
+    }
+    
     if (wsServiceRef.current) {
       console.log('📱 Solicitando conexão WhatsApp...');
       wsServiceRef.current.send({
         type: 'request_connection',
-        data: { barbershopId },
+        data: {},
         barbershopId
       });
     }
@@ -129,11 +140,16 @@ export const useWhatsAppConnection = (barbershopId: string) => {
   const disconnect = useCallback(() => {
     console.log('🔴 DISCONNECT: Iniciando desconexão...');
     
+    if (!barbershopId) {
+      console.log('🚫 WhatsApp: barbershopId vazio, não desconectando');
+      return;
+    }
+    
     if (wsServiceRef.current) {
       console.log('📱 Enviando comando de desconexão para WebSocket...');
       wsServiceRef.current.send({
         type: 'disconnect',
-        data: { barbershopId },
+        data: {},
         barbershopId
       });
     }

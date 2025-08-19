@@ -3,6 +3,7 @@ import { Modal } from './ui';
 import { WhatsAppQRCode } from './WhatsAppQRCode';
 import Button from './ui/Button';
 import { useWhatsApp } from '../contexts/WhatsAppContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   CheckCircle, 
   XCircle, 
@@ -10,8 +11,7 @@ import {
   WifiOff, 
   Smartphone, 
   RefreshCw,
-  AlertCircle,
-  X
+  AlertCircle
 } from 'lucide-react';
 
 interface WhatsAppModalProps {
@@ -23,6 +23,7 @@ export const WhatsAppModal: React.FC<WhatsAppModalProps> = ({
   isOpen, 
   onClose
 }) => {
+  const { user } = useAuth();
   const { 
     whatsappStatus, 
     isWebSocketConnected, 
@@ -97,6 +98,11 @@ export const WhatsAppModal: React.FC<WhatsAppModalProps> = ({
     setIsConnecting(true);
     requestConnection();
   };
+
+  // Não renderizar modal para plano Free
+  if (user?.planType === 'Free') {
+    return null;
+  }
 
   return (
     <Modal open={isOpen} onClose={handleClose} title="Configuração do WhatsApp">

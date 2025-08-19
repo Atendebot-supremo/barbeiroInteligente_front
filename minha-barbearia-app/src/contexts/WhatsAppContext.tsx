@@ -20,10 +20,27 @@ interface WhatsAppProviderProps {
 
 export const WhatsAppProvider: React.FC<WhatsAppProviderProps> = ({ children }) => {
   const { user } = useAuth();
-  const whatsappHook = useWhatsAppConnection(user?.idBarbershop || '');
+  
+  // Hook do WhatsApp só para planos Pro e quando user estiver disponível
+  const whatsappHook = useWhatsAppConnection(
+    (user?.planType === 'Pro' && user?.idBarbershop) ? user.idBarbershop : ''
+  );
+
+  // Para planos Free ou quando user não estiver disponível, retornar estado desconectado e funções vazias
+  const freeContextValue: WhatsAppContextType = {
+    whatsappStatus: { status: 'disconnected' },
+    isWebSocketConnected: false,
+    error: null,
+    requestConnection: () => {},
+    disconnect: () => {},
+    reconnect: () => {}
+  };
+
+  // Se user não existe ou é Free, usar freeContextValue
+  const contextValue = (user && user.planType === 'Pro') ? whatsappHook : freeContextValue;
 
   return (
-    <WhatsAppContext.Provider value={whatsappHook}>
+    <WhatsAppContext.Provider value={contextValue}>
       {children}
     </WhatsAppContext.Provider>
   );

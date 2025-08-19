@@ -36,7 +36,15 @@ api.interceptors.response.use(
     
     if (error.response) {
       // Erro de resposta da API
-      const message = error.response.data?.message || `Erro ${error.response.status}: ${error.response.statusText}`;
+      let message;
+      
+      // Tratamento especial para "Too Many Requests" (status 429)
+      if (error.response.status === 429) {
+        message = 'Muitas tentativas de login. Aguarde alguns minutos antes de tentar novamente.';
+      } else {
+        message = error.response.data?.message || `Erro ${error.response.status}: ${error.response.statusText}`;
+      }
+      
       throw new Error(message);
     } else if (error.request) {
       // Erro de rede

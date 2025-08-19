@@ -10,11 +10,11 @@ import { GlobalLoading, NotificationContainer } from './components/ui';
 
 function App() {
   return (
-    <AuthProvider>
-      <LoadingProvider>
-        <NotificationProvider>
-          <WhatsAppProvider>
-            <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
+        <LoadingProvider>
+          <NotificationProvider>
+            <WhatsAppProvider>
               <div className="min-h-screen flex flex-col">
                 <Header />
                 <div className="flex-1">
@@ -25,11 +25,11 @@ function App() {
                 <GlobalLoading />
                 <NotificationContainer />
               </div>
-            </BrowserRouter>
-          </WhatsAppProvider>
-        </NotificationProvider>
-      </LoadingProvider>
-    </AuthProvider>
+            </WhatsAppProvider>
+          </NotificationProvider>
+        </LoadingProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
