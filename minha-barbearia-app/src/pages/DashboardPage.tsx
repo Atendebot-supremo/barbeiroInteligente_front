@@ -274,7 +274,7 @@ const DashboardPage: React.FC = () => {
                 <Button 
                   variant="primary" 
                   className="w-full"
-                  onClick={() => navigate('/configuracoes')}
+                  onClick={() => navigate('/upgrade')}
                 >
                   Fazer Upgrade para Pro
                 </Button>

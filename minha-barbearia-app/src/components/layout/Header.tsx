@@ -282,7 +282,7 @@ const Header: React.FC = () => {
             {/* Botão de Upgrade para plano Free */}
             {user?.planType === 'Free' && (
               <Link
-                to="/configuracoes"
+                to="/upgrade"
                 className="hidden lg:flex items-center space-x-2 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

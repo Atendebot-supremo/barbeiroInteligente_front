@@ -53,6 +53,10 @@
   color: var(--color-text-primary);
 }
 
+.text-white-muted {
+  color: var(--color-text-white-muted);
+}
+
 /* Ocultar scrollbar para carrosséis (mantendo o scroll funcional) */
 .carousel {
   scrollbar-width: none;        /* Firefox */

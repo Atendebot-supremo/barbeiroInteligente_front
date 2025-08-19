@@ -51,7 +51,7 @@ const LoginPage = () => {
           <h2 className="mt-6 text-3xl font-extrabold text-primary-light">
             Entre na sua conta
           </h2>
-          <p className="mt-2 text-sm text-text-muted">
+          <p className="mt-2 text-sm text-white-muted">
             Ou{' '}
             <Link to="/cadastro" className="font-medium text-primary hover:text-primary/80">
               crie uma nova conta

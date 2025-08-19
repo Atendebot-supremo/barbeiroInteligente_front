@@ -9,7 +9,7 @@ import { useNotification } from '../contexts/NotificationContext';
 
 const BarbeirosPage: React.FC = () => {
   const { user } = useAuth();
-  const { showNotification } = useNotification();
+  const { success: showSuccess, error: showError, warning: showWarning } = useNotification();
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [services, setServices] = useState<Servico[]>([]);
   const [combos, setCombos] = useState<Combo[]>([]);
@@ -80,7 +80,7 @@ const BarbeirosPage: React.FC = () => {
   const openAddBarber = () => {
     // Verificar limitação do plano Free
     if (user?.planType === 'Free' && barbers.length >= 1) {
-      showNotification('warning', 'Plano Free permite apenas 1 barbeiro. Faça upgrade para o Plano Pro para adicionar mais barbeiros.');
+      showWarning('Plano Free permite apenas 1 barbeiro. Faça upgrade para o Plano Pro para adicionar mais barbeiros.');
       return;
     }
     
@@ -154,7 +154,7 @@ const BarbeirosPage: React.FC = () => {
       setBarberModalOpen(false);
     } catch (error) {
       console.error('Erro ao salvar barbeiro:', error);
-      alert('Erro ao salvar barbeiro. Tente novamente.');
+      showError('Erro ao salvar barbeiro. Tente novamente.');
     }
   };
 
@@ -188,7 +188,7 @@ const BarbeirosPage: React.FC = () => {
       setConfirmDeleteOpen(false);
     } catch (error) {
       console.error('Erro ao excluir barbeiro:', error);
-      alert('Erro ao excluir barbeiro. Tente novamente.');
+      showError('Erro ao excluir barbeiro. Tente novamente.');
     }
   };
 

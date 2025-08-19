@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Input, Modal } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
-import { barbershopService } from '../services/realApiService';
+import { useNotification } from '../contexts/NotificationContext';
+import { barbershopService, subscriptionService } from '../services/realApiService';
 import type { Barbearia } from '../types';
-import { Bell, User, Store, CreditCard, AlertTriangle, Save, Edit3 } from 'lucide-react';
+import { Bell, User, Store, AlertTriangle, Save, Edit3, Trash2, ArrowLeft } from 'lucide-react';
 
 const ConfiguracoesPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout, refreshUserData } = useAuth();
+  const { success: showSuccess, error: showError, warning: showWarning } = useNotification();
   const [loading, setLoading] = useState(true);
   const [barbershopData, setBarbershopData] = useState<Barbearia | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showCancelSubscriptionModal, setShowCancelSubscriptionModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -32,6 +35,9 @@ const ConfiguracoesPage: React.FC = () => {
     const loadBarbershopData = async () => {
       console.log('🔍 ConfiguracoesPage - Debug dados do usuário:', user);
       console.log('🔍 ConfiguracoesPage - idBarbershop:', user?.idBarbershop);
+      console.log('🔍 ConfiguracoesPage - planType:', user?.planType);
+      console.log('🔍 ConfiguracoesPage - subscriptionId:', user?.subscriptionId);
+      console.log('🔍 ConfiguracoesPage - subscriptionId type:', typeof user?.subscriptionId);
       
       if (!user?.idBarbershop) {
         console.warn('⚠️ ConfiguracoesPage - Sem idBarbershop, usando dados do próprio user');
@@ -93,7 +99,7 @@ const ConfiguracoesPage: React.FC = () => {
     const barbershopId = user?.idBarbershop || (user as any)?.id;
     
     if (!barbershopId) {
-      alert('Erro: ID da barbearia não encontrado. Faça login novamente.');
+      showError('Erro: ID da barbearia não encontrado. Faça login novamente.');
       return;
     }
 
@@ -109,40 +115,100 @@ const ConfiguracoesPage: React.FC = () => {
       
       setBarbershopData(updatedData);
       setEditingProfile(false);
-      alert('Perfil atualizado com sucesso!');
+      showSuccess('Perfil atualizado com sucesso!');
     } catch (error) {
       console.error('❌ ConfiguracoesPage - Erro ao atualizar perfil:', error);
-      alert('Erro ao atualizar perfil. Tente novamente.');
+      showError('Erro ao atualizar perfil. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Cancelar assinatura Pro -> Free
   const handleCancelSubscription = async () => {
-    const barbershopId = user?.idBarbershop || (user as any)?.id;
+    console.log('🔍 handleCancelSubscription - user?.subscriptionId:', user?.subscriptionId);
+    console.log('🔍 handleCancelSubscription - user?.planType:', user?.planType);
     
-    if (!barbershopId) {
-      alert('Erro: ID da barbearia não encontrado. Faça login novamente.');
+    if (!user?.subscriptionId || user.subscriptionId.trim() === '') {
+      showError('ID da assinatura não encontrado. Entre em contato com o suporte.');
+      return;
+    }
+
+    if (user?.planType !== 'Pro') {
+      showWarning('Você não possui uma assinatura Pro ativa para cancelar.');
       return;
     }
 
     try {
-      console.log('🚫 ConfiguracoesPage - Cancelando assinatura:', barbershopId);
+      setLoading(true);
+      console.log('🚫 ConfiguracoesPage - Cancelando assinatura Pro:', user.subscriptionId);
       
-      // Aqui você implementaria a lógica de cancelamento de assinatura
-      // Por exemplo, chamar uma API específica ou atualizar o status
-      await barbershopService.update(barbershopId, { status: 'Cancelado' });
+      // Cancelar assinatura via API Asaas
+      await subscriptionService.cancel(user.subscriptionId);
       
-      // Atualizar dados locais
+      // Atualizar dados do usuário no contexto
+      await refreshUserData();
+      
+      // Atualizar dados locais para Free
       if (barbershopData) {
-        setBarbershopData({ ...barbershopData, status: 'Cancelado' });
+        setBarbershopData({ 
+          ...barbershopData, 
+          planType: 'Free',
+          subscriptionId: null 
+        });
       }
       
-      alert('Assinatura cancelada com sucesso. Entre em contato conosco se tiver dúvidas.');
-      setShowCancelModal(false);
+      showSuccess('Assinatura Pro cancelada com sucesso! Sua conta foi alterada para o plano Free.');
+      setShowCancelSubscriptionModal(false);
     } catch (error) {
       console.error('❌ ConfiguracoesPage - Erro ao cancelar assinatura:', error);
-      alert('Erro ao cancelar assinatura. Tente novamente ou entre em contato conosco.');
+      showError('Erro ao cancelar assinatura. Tente novamente ou entre em contato com o suporte.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Deletar conta completamente
+  const handleDeleteAccount = async () => {
+    const barbershopId = user?.idBarbershop || (user as any)?.id;
+    
+    if (!barbershopId) {
+      showError('ID da barbearia não encontrado. Faça login novamente.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('🗑️ ConfiguracoesPage - Deletando conta:', barbershopId);
+      
+      // 1. Primeiro cancelar assinatura se existir (Pro users)
+      if (user?.planType === 'Pro' && user?.subscriptionId && user.subscriptionId.trim() !== '') {
+        console.log('🚫 ConfiguracoesPage - Cancelando assinatura antes da exclusão:', user.subscriptionId);
+        try {
+          await subscriptionService.cancel(user.subscriptionId);
+          console.log('✅ Assinatura cancelada com sucesso antes da exclusão');
+        } catch (subscriptionError) {
+          console.warn('⚠️ Erro ao cancelar assinatura (continuando com exclusão):', subscriptionError);
+          // Continua com a exclusão mesmo se falhar o cancelamento da assinatura
+        }
+      }
+      
+      // 2. Deletar conta via API
+      console.log('🗑️ Deletando barbearia:', barbershopId);
+      await barbershopService.delete(barbershopId);
+      
+      showSuccess('Conta deletada com sucesso. Você será redirecionado para a tela de login.');
+      setShowDeleteAccountModal(false);
+      
+      // Fazer logout e redirecionar
+      setTimeout(() => {
+        logout();
+      }, 2000);
+    } catch (error) {
+      console.error('❌ ConfiguracoesPage - Erro ao deletar conta:', error);
+      showError('Erro ao deletar conta. Tente novamente ou entre em contato com o suporte.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -172,7 +238,7 @@ const ConfiguracoesPage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold text-primary-light">Configurações</h1>
-            <p className="text-text-secondary">Gerencie as configurações da sua barbearia</p>
+            <p className="text-white-muted">Gerencie as configurações da sua barbearia</p>
           </div>
         </div>
 
@@ -407,22 +473,42 @@ const ConfiguracoesPage: React.FC = () => {
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-red-600" />
               <h2 className="text-xl font-semibold text-red-800">Área de Perigo</h2>
-        </div>
+            </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Cancelar Assinatura Pro -> Free */}
+              {user?.planType === 'Pro' && user?.subscriptionId && user.subscriptionId.trim() !== '' && (
+                <div>
+                  <h3 className="font-medium text-red-800 mb-2">Cancelar Assinatura Pro</h3>
+                  <p className="text-sm text-red-600 mb-4">
+                    Cancelar sua assinatura Pro e voltar para o plano Free. Você manterá sua conta, 
+                    mas perderá acesso às funcionalidades premium.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCancelSubscriptionModal(true)}
+                    className="border-yellow-300 text-yellow-700 hover:bg-yellow-50 flex items-center gap-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Voltar para Plano Free
+                  </Button>
+                </div>
+              )}
+
+              {/* Deletar Conta */}
               <div>
-                <h3 className="font-medium text-red-800 mb-2">Cancelar Assinatura</h3>
+                <h3 className="font-medium text-red-800 mb-2">Deletar Conta</h3>
                 <p className="text-sm text-red-600 mb-4">
-                  Ao cancelar sua assinatura, você perderá acesso a todas as funcionalidades do sistema. 
-                  Seus dados serão mantidos por 30 dias para possível reativação.
+                  <strong>ATENÇÃO:</strong> Esta ação é irreversível! Todos os seus dados, agendamentos, 
+                  barbeiros e histórico serão permanentemente excluídos. Sua conta será completamente removida.
                 </p>
                 <Button
                   variant="outline"
-                  onClick={() => setShowCancelModal(true)}
+                  onClick={() => setShowDeleteAccountModal(true)}
                   className="border-red-300 text-red-700 hover:bg-red-50 flex items-center gap-2"
                 >
-                  <CreditCard className="w-4 h-4" />
-                  Cancelar Assinatura
+                  <Trash2 className="w-4 h-4" />
+                  Deletar Conta Permanentemente
                 </Button>
               </div>
             </div>
@@ -430,33 +516,34 @@ const ConfiguracoesPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Modal de Cancelamento de Assinatura */}
+      {/* Modal de Cancelamento de Assinatura Pro -> Free */}
       <Modal
-        open={showCancelModal}
-        title="Cancelar Assinatura"
-        onClose={() => setShowCancelModal(false)}
+        open={showCancelSubscriptionModal}
+        title="Cancelar Assinatura Pro"
+        onClose={() => setShowCancelSubscriptionModal(false)}
         footer={(
           <>
-            <Button variant="outline" onClick={() => setShowCancelModal(false)}>
-              Manter Assinatura
+            <Button variant="outline" onClick={() => setShowCancelSubscriptionModal(false)}>
+              Manter Pro
             </Button>
             <Button 
               variant="primary" 
               onClick={handleCancelSubscription}
-              className="bg-red-600 hover:bg-red-700 border-red-600"
+              className="bg-yellow-600 hover:bg-yellow-700 border-yellow-600"
+              disabled={loading}
             >
-              Confirmar Cancelamento
+              Voltar para Free
             </Button>
           </>
         )}
       >
         <div className="space-y-4">
-          <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg">
-            <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
+          <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg">
+            <ArrowLeft className="w-6 h-6 text-yellow-600 flex-shrink-0" />
             <div>
-              <p className="font-medium text-red-800">Atenção! Esta ação não pode ser desfeita.</p>
-              <p className="text-sm text-red-600">
-                Você está prestes a cancelar sua assinatura permanentemente.
+              <p className="font-medium text-yellow-800">Cancelar Assinatura Pro</p>
+              <p className="text-sm text-yellow-600">
+                Sua conta voltará para o plano Free com limitações.
               </p>
             </div>
           </div>
@@ -465,36 +552,129 @@ const ConfiguracoesPage: React.FC = () => {
             <h4 className="font-medium text-primary-dark">O que acontecerá após o cancelamento:</h4>
             <ul className="space-y-2 text-sm text-text-secondary">
               <li className="flex items-start gap-2">
-                <span className="text-red-500 mt-1">•</span>
-                <span>Perda imediata de acesso a todas as funcionalidades</span>
+                <span className="text-yellow-500 mt-1">•</span>
+                <span>Sua conta voltará para o plano Free</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-red-500 mt-1">•</span>
-                <span>Seus dados serão mantidos por 30 dias para possível reativação</span>
+                <span className="text-yellow-500 mt-1">•</span>
+                <span>Máximo de 1 barbeiro (excesso será desativado)</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-red-500 mt-1">•</span>
-                <span>Agendamentos futuros serão cancelados automaticamente</span>
+                <span className="text-yellow-500 mt-1">•</span>
+                <span>Máximo de 4 serviços (excesso será desativado)</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-red-500 mt-1">•</span>
-                <span>Histórico de agendamentos e relatórios ficarão indisponíveis</span>
+                <span className="text-yellow-500 mt-1">•</span>
+                <span>Dashboard ficará indisponível</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-500 mt-1">•</span>
+                <span>Seus dados e agendamentos serão mantidos</span>
               </li>
             </ul>
           </div>
 
-          <div className="p-4 bg-yellow-50 rounded-lg">
-            <h4 className="font-medium text-yellow-800 mb-2">Alternativas ao cancelamento:</h4>
-            <ul className="space-y-1 text-sm text-yellow-700">
-              <li>• Entre em contato conosco para negociar condições especiais</li>
-              <li>• Considere pausar temporariamente sua conta</li>
-              <li>• Explore nossos planos mais econômicos</li>
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-medium text-blue-800 mb-2">💡 Você pode reativar a qualquer momento:</h4>
+            <ul className="space-y-1 text-sm text-blue-700">
+              <li>• Faça upgrade novamente quando quiser</li>
+              <li>• Todos os seus dados serão restaurados</li>
+              <li>• Entre em contato para condições especiais</li>
             </ul>
           </div>
 
           <div className="border-t pt-4">
             <p className="text-sm text-text-muted">
-              Tem certeza de que deseja prosseguir com o cancelamento da sua assinatura?
+              Tem certeza de que deseja cancelar sua assinatura Pro?
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Deletar Conta */}
+      <Modal
+        open={showDeleteAccountModal}
+        title="Deletar Conta Permanentemente"
+        onClose={() => setShowDeleteAccountModal(false)}
+        footer={(
+          <>
+            <Button variant="outline" onClick={() => setShowDeleteAccountModal(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleDeleteAccount}
+              className="bg-red-600 hover:bg-red-700 border-red-600"
+              disabled={loading}
+            >
+              Deletar Permanentemente
+            </Button>
+          </>
+        )}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg">
+            <Trash2 className="w-6 h-6 text-red-600 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-red-800">⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!</p>
+              <p className="text-sm text-red-600">
+                Toda sua conta e dados serão permanentemente excluídos.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary-dark">O que será deletado permanentemente:</h4>
+            <ul className="space-y-2 text-sm text-text-secondary">
+              {user?.planType === 'Pro' && user?.subscriptionId && (
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 mt-1">•</span>
+                  <span><strong>Assinatura Pro será cancelada automaticamente</strong></span>
+                </li>
+              )}
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 mt-1">•</span>
+                <span>Sua conta e perfil da barbearia</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 mt-1">•</span>
+                <span>Todos os barbeiros cadastrados</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 mt-1">•</span>
+                <span>Todos os serviços e preços</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 mt-1">•</span>
+                <span>Histórico completo de agendamentos</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 mt-1">•</span>
+                <span>Horários de funcionamento</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-red-500 mt-1">•</span>
+                <span>Configurações e preferências</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="p-4 bg-red-100 rounded-lg border-l-4 border-red-500">
+            <h4 className="font-medium text-red-800 mb-2">🚨 IMPORTANTE:</h4>
+            <ul className="space-y-1 text-sm text-red-700">
+              <li>• Esta ação NÃO pode ser desfeita</li>
+              <li>• Não há backup ou recuperação possível</li>
+              <li>• Você precisará criar uma nova conta do zero</li>
+              {user?.planType === 'Pro' && user?.subscriptionId && (
+                <li>• <strong>Sua assinatura Pro será cancelada antes da exclusão</strong></li>
+              )}
+              <li>• Todas as cobranças futuras serão canceladas</li>
+            </ul>
+          </div>
+
+          <div className="border-t pt-4">
+            <p className="text-sm text-text-muted font-medium">
+              Tem absoluta certeza de que deseja deletar permanentemente sua conta?
             </p>
           </div>
         </div>

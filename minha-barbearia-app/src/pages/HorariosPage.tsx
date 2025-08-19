@@ -4,6 +4,7 @@ import { Button, Card, Modal, Input } from '../components/ui';
 import type { Barbeiro } from '../types';
 import { barbershopService, scheduleService } from '../services/realApiService';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 // Interface para múltiplos períodos no mesmo dia
 interface PeriodoTrabalho {
@@ -61,6 +62,7 @@ const getApiDayName = (dayKey: string): string => {
 
 const HorariosPage: React.FC = () => {
   const { user } = useAuth();
+  const { error: showError, warning: showWarning } = useNotification();
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
   const [horarios, setHorarios] = useState<HorariosDia[]>([]);
@@ -276,7 +278,7 @@ const HorariosPage: React.FC = () => {
       } else {
         // Editar período existente - por enquanto não implementado na API
         console.warn('⚠️ Edição de período não implementada ainda');
-        alert('Edição de períodos será implementada em breve. Por favor, delete e crie novamente.');
+        showWarning('Edição de períodos será implementada em breve. Por favor, delete e crie novamente.');
         setModalOpen(false);
         return;
       }
@@ -284,7 +286,7 @@ const HorariosPage: React.FC = () => {
       setModalOpen(false);
     } catch (error) {
       console.error('❌ Erro ao salvar período:', error);
-      alert('Erro ao salvar período. Tente novamente.');
+      showError('Erro ao salvar período. Tente novamente.');
     }
   };
 
@@ -332,7 +334,7 @@ const HorariosPage: React.FC = () => {
         status: error.response?.status,
         data: error.response?.data
       });
-      alert(`Erro ao remover período: ${error.message || 'Erro desconhecido'}`);
+      showError(`Erro ao remover período: ${error.message || 'Erro desconhecido'}`);
     }
   };
 

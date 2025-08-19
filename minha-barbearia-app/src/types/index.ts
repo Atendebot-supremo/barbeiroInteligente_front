@@ -57,6 +57,8 @@ export interface Barbearia extends BaseEntity {
     instanceZapi?: string; // Configuração WhatsApp
     status: StatusBarbearia;
     planType?: string;  // Tipo do plano (Free, Pro)
+    clientId?: string;  // ID do cliente no Asaas
+    subscriptionId?: string | null;  // ID da assinatura no Asaas (pode ser vazio)
 }
 
 // Profissional/barbeiro

@@ -42,10 +42,17 @@ export const authApi = {
     // baseURL já inclui "/api"; então usamos caminho relativo "/auth/login"
     const response = await api.post('/auth/login', { email, password });
     const payload = response.data ?? {};
+    
+    console.log('🔍 Resposta completa da API de login:', response.data);
+    
     // API esperada: { success: true, data: { token, barbershop: { ... } } }
     const envelope = payload.data ?? payload; // caso venha sem envelope
     const token = envelope.token || envelope.accessToken || envelope.jwt;
     const user = envelope.barbershop || envelope.user || envelope;
+    
+    console.log('📋 Token extraído:', token);
+    console.log('👤 User extraído:', user);
+    
     return { token, user };
   },
 };
@@ -466,6 +473,48 @@ export const dataService = {
   },
 };
 
+// Serviço de Assinaturas (Asaas)
+export const subscriptionService = {
+  // Criar assinatura com cartão de crédito
+  createWithCreditCard: async (data: {
+    customer: string;
+    value: number;
+    nextDueDate: string;
+    description: string;
+    discount?: {
+      value: number;
+      dueDateLimitDays: number;
+      type: string;
+    };
+    creditCard: {
+      holderName: string;
+      number: string;
+      expiryMonth: string;
+      expiryYear: string;
+      ccv: string;
+    };
+    creditCardHolderInfo: {
+      name: string;
+      email: string;
+      cpfCnpj: string;
+      postalCode?: string;
+      addressNumber?: string;
+    };
+  }): Promise<any> => {
+    // Usar os dados diretamente como payload, já que vem estruturado corretamente
+    const payload = data;
+    
+    const response = await api.post('/subscriptions/asaas/with-credit-card', payload);
+    return response.data;
+  },
+
+  // Cancelar assinatura (Pro -> Free)
+  cancel: async (subscriptionId: string): Promise<any> => {
+    const response = await api.delete(`/subscriptions/asaas/${subscriptionId}`);
+    return response.data;
+  },
+};
+
 // Exportação combinada para fácil importação
 export const apiServices = {
   barbershop: barbershopService,
@@ -474,4 +523,5 @@ export const apiServices = {
   schedule: scheduleService,
   appointment: appointmentService,
   data: dataService,
+  subscription: subscriptionService,
 };

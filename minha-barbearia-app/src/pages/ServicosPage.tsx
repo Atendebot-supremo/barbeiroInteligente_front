@@ -10,7 +10,7 @@ import { useNotification } from '../contexts/NotificationContext';
 
 const ServicosPage = () => {
   const { user } = useAuth();
-  const { showNotification } = useNotification();
+  const { success: showSuccess, error: showError, warning: showWarning } = useNotification();
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
   const [services, setServices] = useState<Servico[]>([]);
@@ -81,7 +81,7 @@ const ServicosPage = () => {
   const openAddService = useCallback(() => {
     // Verificar limitação do plano Free
     if (user?.planType === 'Free' && services.length >= 4) {
-      showNotification('warning', 'Plano Free permite apenas 4 serviços. Faça upgrade para o Plano Pro para adicionar mais serviços.');
+      showWarning('Plano Free permite apenas 4 serviços. Faça upgrade para o Plano Pro para adicionar mais serviços.');
       return;
     }
     
@@ -92,7 +92,7 @@ const ServicosPage = () => {
     setServiceDesc('');
     setServiceBarberId(selectedBarberId || barbers[0]?.idBarber || '');
     setServiceModalOpen(true);
-  }, [selectedBarberId, barbers, user?.planType, services.length, showNotification]);
+  }, [selectedBarberId, barbers, user?.planType, services.length, showWarning]);
 
   const openEditService = useCallback((svc: Servico) => {
     setEditingServiceId(svc.idProduct);
@@ -153,8 +153,7 @@ const ServicosPage = () => {
       setServiceModalOpen(false);
     } catch (error) {
       console.error('Erro ao salvar serviço:', error);
-      // TODO: Mostrar erro para o usuário
-      alert('Erro ao salvar serviço. Tente novamente.');
+      showError('Erro ao salvar serviço. Tente novamente.');
     }
   };
 
@@ -181,7 +180,7 @@ const ServicosPage = () => {
       setConfirmDeleteOpen(false);
     } catch (error) {
       console.error('Erro ao excluir serviço:', error);
-      alert('Erro ao excluir serviço. Tente novamente.');
+      showError('Erro ao excluir serviço. Tente novamente.');
     }
   };
 

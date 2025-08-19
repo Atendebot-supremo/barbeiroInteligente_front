@@ -14,6 +14,7 @@ const AgendaPage = lazy(() => import('../pages/AgendaPage'));
 const BarbeirosPage = lazy(() => import('../pages/BarbeirosPage'));
 const ConfiguracoesPage = lazy(() => import('../pages/ConfiguracoesPage'));
 const HorariosPage = lazy(() => import('../pages/HorariosPage'));
+const UpgradePage = lazy(() => import('../pages/UpgradePage'));
 
 
 export const AppRoutes = () => {
@@ -31,6 +32,7 @@ export const AppRoutes = () => {
         <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
         <Route path="/horarios" element={<ProtectedRoute><HorariosPage /></ProtectedRoute>} />
         <Route path="/configuracoes" element={<ProtectedRoute><ConfiguracoesPage /></ProtectedRoute>} />
+        <Route path="/upgrade" element={<ProtectedRoute><UpgradePage /></ProtectedRoute>} />
 
         {/* Rota inicial - abre dashboard por padrão */}
         <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

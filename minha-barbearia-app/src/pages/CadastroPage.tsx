@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { barbershopService } from '../services/realApiService';
+import { barbershopService, subscriptionService } from '../services/realApiService';
+import { useNotification } from '../contexts/NotificationContext';
 // Tipos para os planos (temporário para resolver problema de importação)
 type TipoPlano = 'free' | 'pro';
 
@@ -25,7 +26,9 @@ interface Plano {
 
 const CadastroPage = () => {
   const navigate = useNavigate();
+  const { success: showSuccess, error: showError } = useNotification();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Funções utilitárias para formatação
   const formatCNPJ = (value: string) => {
@@ -278,8 +281,11 @@ const CadastroPage = () => {
     // Para plano free, não precisa validar dados de pagamento
     if (planoSelecionado === 'pro' && !validateStep4()) return;
 
+    setIsProcessing(true);
     try {
-      // Dados para a API conforme especificação
+      console.log('🚀 Iniciando processo de cadastro...');
+      
+      // 1. Primeiro criar a conta da barbearia
       const cadastroData = {
         barbershop: nomeBarbearia,
         email: email,
@@ -291,19 +297,83 @@ const CadastroPage = () => {
         planType: planoSelecionado === 'free' ? 'Free' : 'Pro'
       };
 
-      console.log('Enviando dados para API:', cadastroData);
+      console.log('📋 Criando conta da barbearia:', cadastroData);
+      const barbershopResponse = await barbershopService.create(cadastroData);
+      console.log('✅ Barbearia criada:', barbershopResponse);
 
-      // Chama a API de criação
-      const response = await barbershopService.create(cadastroData);
-      
-      console.log('Resposta da API:', response);
-      
-      alert(`Cadastro realizado com sucesso no Plano ${planoSelecionado === 'free' ? 'Free' : 'Pro'}! Você será redirecionado para o login.`);
-      navigate('/login');
+      // Extrair dados da resposta (ClientId necessário para pagamento)
+      const barbershopData = (barbershopResponse as any).data || barbershopResponse;
+      const clientId = barbershopData.ClientId || barbershopData.clientId || barbershopData.client_id;
+
+      // 2. Se for plano Pro, processar pagamento
+      if (planoSelecionado === 'pro') {
+        if (!clientId) {
+          throw new Error('ClientId não encontrado na resposta da criação da conta');
+        }
+
+        console.log('💳 Processando pagamento Pro para clientId:', clientId);
+
+        // Preparar dados do cartão
+        const expiryDate = `${mesValidade}/${anoValidade.slice(-2)}`;
+        const [month, year] = expiryDate.split('/');
+        const fullYear = `20${year}`;
+
+        // Calcular próxima data de cobrança
+        const nextDueDate = new Date();
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+        const dueDateString = nextDueDate.toISOString().split('T')[0];
+
+        const subscriptionData = {
+          customer: clientId,
+          billingType: "CREDIT_CARD",
+          value: 1.00, // Valor de teste
+          nextDueDate: dueDateString,
+          cycle: "MONTHLY",
+          description: "Pro",
+          status: "ACTIVE",
+          discount: {
+            value: 34,
+            dueDateLimitDays: 0,
+            type: "PERCENTAGE"
+          },
+          interest: { value: 0 },
+          fine: { value: 0, type: "FIXED" },
+          endDate: null,
+          updatePendingPayments: true,
+          externalReference: null,
+          creditCard: {
+            holderName: nomeCartao,
+            number: numeroCartao.replace(/\s/g, ''),
+            expiryMonth: month,
+            expiryYear: fullYear,
+            ccv: cvv
+          },
+          creditCardHolderInfo: {
+            name: nomeCartao,
+            email: email,
+            cpfCnpj: documento.replace(/\D/g, ''),
+            postalCode: cep.replace(/\D/g, ''),
+            addressNumber: numero,
+            phone: celular
+          }
+        };
+
+        console.log('🚀 Enviando dados para API Asaas:', subscriptionData);
+        const subscriptionResponse = await subscriptionService.createWithCreditCard(subscriptionData);
+        console.log('✅ Assinatura criada:', subscriptionResponse);
+      }
+
+      // 3. Sucesso
+      showSuccess(`Cadastro realizado com sucesso no Plano ${planoSelecionado === 'free' ? 'Free' : 'Pro'}! Você será redirecionado para o login.`);
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
       
     } catch (error) {
-      console.error('Erro ao criar conta:', error);
-      alert('Erro ao criar conta. Tente novamente.');
+      console.error('❌ Erro ao criar conta:', error);
+      showError('Erro ao criar conta. Verifique os dados e tente novamente.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -331,7 +401,7 @@ const CadastroPage = () => {
           />
           <h2 className="mt-6 text-3xl font-extrabold text-primary-light">Crie sua conta</h2>
 
-          <p className="mt-2 text-sm text-text-muted">
+          <p className="mt-2 text-sm text-white-muted">
             Já tem uma conta?{' '}
             <Link to="/login" className="font-medium text-primary hover:text-primary/80">
               Faça o login
@@ -710,9 +780,14 @@ const CadastroPage = () => {
                   </div>
 
                     <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mt-4">
-                      <p className="text-sm text-yellow-800">
-                        🔒 Seus dados estão seguros. Utilizamos criptografia de ponta para proteger suas informações.
-                      </p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-yellow-800">
+                          🔒 Seus dados estão seguros. Utilizamos criptografia de ponta para proteger suas informações.
+                        </p>
+                        <p className="text-sm text-yellow-800">
+                          💳 Após criar sua conta, processaremos automaticamente o pagamento do Plano Pro.
+                        </p>
+                      </div>
                     </div>
                   </>
                 )}
@@ -746,7 +821,16 @@ const CadastroPage = () => {
                     {step === 3 && planoSelecionado === 'free' ? 'Finalizar cadastro' : 'Próxima etapa'}
                   </Button>
                 ) : (
-                  <Button variant="primary" onClick={handleSubmit}>Finalizar cadastro</Button>
+                  <Button 
+                    variant="primary" 
+                    onClick={handleSubmit}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing 
+                      ? (planoSelecionado === 'pro' ? 'Processando pagamento...' : 'Criando conta...') 
+                      : 'Finalizar cadastro'
+                    }
+                  </Button>
                 )}
               </div>
             </div>

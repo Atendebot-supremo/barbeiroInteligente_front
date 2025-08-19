@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal, Input } from '../components/ui';
 import type { Barbeiro, Servico, StatusAgendamento } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { barbershopService, appointmentService } from '../services/realApiService';
 import type { Agendamento } from '../types';
 
@@ -14,6 +15,7 @@ import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 
 const AgendaPage: React.FC = () => {
   const { user } = useAuth();
+  const { success: showSuccess, error: showError, warning: showWarning } = useNotification();
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [services, setServices] = useState<Servico[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
@@ -244,7 +246,7 @@ const AgendaPage: React.FC = () => {
       setNewClientPhone('');
     } catch (error) {
       console.error('Erro ao criar agendamento:', error);
-      alert('Erro ao criar agendamento. Tente novamente.');
+      showError('Erro ao criar agendamento. Tente novamente.');
     }
   };
 
@@ -260,7 +262,7 @@ const AgendaPage: React.FC = () => {
       setEventModalOpen(false);
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);
-      alert('Erro ao cancelar agendamento. Tente novamente.');
+      showError('Erro ao cancelar agendamento. Tente novamente.');
     }
   };
 
@@ -325,7 +327,7 @@ const AgendaPage: React.FC = () => {
       setEditModalOpen(false);
     } catch (error) {
       console.error('Erro ao editar agendamento:', error);
-      alert('Erro ao editar agendamento. Tente novamente.');
+      showError('Erro ao editar agendamento. Tente novamente.');
     }
   };
 
