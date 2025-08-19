@@ -5,6 +5,7 @@ import { Header } from './components/layout';
 import { AuthProvider } from './contexts/AuthContext';
 import { LoadingProvider } from './contexts/LoadingContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { WhatsAppProvider } from './contexts/WhatsAppContext';
 import { GlobalLoading, NotificationContainer } from './components/ui';
 
 function App() {
@@ -12,18 +13,20 @@ function App() {
     <AuthProvider>
       <LoadingProvider>
         <NotificationProvider>
-          <BrowserRouter>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <div className="flex-1">
-                <AppRoutes />
+          <WhatsAppProvider>
+            <BrowserRouter>
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <div className="flex-1">
+                  <AppRoutes />
+                </div>
+                
+                {/* Componentes globais */}
+                <GlobalLoading />
+                <NotificationContainer />
               </div>
-              
-              {/* Componentes globais */}
-              <GlobalLoading />
-              <NotificationContainer />
-            </div>
-          </BrowserRouter>
+            </BrowserRouter>
+          </WhatsAppProvider>
         </NotificationProvider>
       </LoadingProvider>
     </AuthProvider>

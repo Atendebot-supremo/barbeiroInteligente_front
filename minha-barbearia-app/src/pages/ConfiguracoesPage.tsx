@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Input, Modal } from '../components/ui';
+import { WhatsAppModal } from '../components/WhatsAppModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { useWhatsApp } from '../contexts/WhatsAppContext';
 import { barbershopService, subscriptionService } from '../services/realApiService';
 import type { Barbearia } from '../types';
-import { Bell, User, Store, AlertTriangle, Save, Edit3, Trash2, ArrowLeft } from 'lucide-react';
+import { Bell, User, Store, AlertTriangle, Save, Edit3, Trash2, ArrowLeft, MessageCircle, MessageCircleOff, Settings } from 'lucide-react';
 
 const ConfiguracoesPage: React.FC = () => {
   const { user, logout, refreshUserData } = useAuth();
   const { success: showSuccess, error: showError, warning: showWarning } = useNotification();
+  const { whatsappStatus } = useWhatsApp();
   const [loading, setLoading] = useState(true);
   const [barbershopData, setBarbershopData] = useState<Barbearia | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);
   const [showCancelSubscriptionModal, setShowCancelSubscriptionModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -407,8 +411,63 @@ const ConfiguracoesPage: React.FC = () => {
             </div>
           </Card>
 
+          {/* WhatsApp */}
+          <Card className="bg-bg-secondary border border-border">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <MessageCircle className="w-6 h-6 text-green-600" />
+                <h2 className="text-xl font-semibold text-primary-dark">WhatsApp</h2>
+              </div>
 
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-primary-dark">Status da Conexão</p>
+                    <p className="text-sm text-text-muted">
+                      {whatsappStatus.status === 'connected' ? 'Conectado e funcionando' :
+                       whatsappStatus.status === 'connecting' ? 'Conectando...' :
+                       whatsappStatus.status === 'error' ? 'Erro na conexão' :
+                       'Desconectado'}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {whatsappStatus.status === 'connected' ? (
+                      <MessageCircle className="w-5 h-5 text-green-600" />
+                    ) : whatsappStatus.status === 'connecting' ? (
+                      <div className="w-5 h-5 animate-spin rounded-full border-2 border-yellow-600 border-t-transparent"></div>
+                    ) : (
+                      <MessageCircleOff className="w-5 h-5 text-red-600" />
+                    )}
+                    <span className={`text-sm font-medium ${
+                      whatsappStatus.status === 'connected' ? 'text-green-600' :
+                      whatsappStatus.status === 'connecting' ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {whatsappStatus.status === 'connected' ? 'Conectado' :
+                       whatsappStatus.status === 'connecting' ? 'Conectando' :
+                       whatsappStatus.status === 'error' ? 'Erro' :
+                       'Desconectado'}
+                    </span>
+                  </div>
+                </div>
 
+                <div className="pt-4 border-t border-border">
+                  <Button
+                    onClick={() => setShowWhatsAppModal(true)}
+                    className={`w-full flex items-center justify-center transition-colors duration-200 ${
+                      whatsappStatus.status === 'connected' 
+                        ? 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400' 
+                        : 'bg-green-600 text-white hover:bg-green-700 border-green-600 hover:border-green-700'
+                    }`}
+                    variant={whatsappStatus.status === 'connected' ? 'outline' : 'primary'}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    {whatsappStatus.status === 'connected' ? 'Gerenciar Conexão' : 'Conectar WhatsApp'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
 
         </div>
 
@@ -679,6 +738,12 @@ const ConfiguracoesPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Modal do WhatsApp */}
+      <WhatsAppModal
+        isOpen={showWhatsAppModal}
+        onClose={() => setShowWhatsAppModal(false)}
+      />
     </div>
   );
 };

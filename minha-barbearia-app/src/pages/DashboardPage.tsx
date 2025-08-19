@@ -4,12 +4,15 @@ import { Card, Button } from '../components/ui';
 import { Calendar, Users, Settings, Plus, MessageCircle, MessageCircleOff, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { barbershopService } from '../services/realApiService';
+import { useWhatsApp } from '../contexts/WhatsAppContext';
 import type { Agendamento, Servico, Barbeiro } from '../types';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  
+  // Hook do WhatsApp
+  const { whatsappStatus } = useWhatsApp();
   
   // Verificar se é plano Free (Dashboard indisponível)
   const isFreeplan = user?.planType === 'Free';
@@ -216,18 +219,7 @@ const DashboardPage: React.FC = () => {
     loadDashboardData();
   }, [user?.idBarbershop, isFreeplan]);
 
-  // Simular verificação de conexão (WhatsApp não implementado)
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setConnectionStatus('online');
-      } catch {
-        setConnectionStatus('offline');
-      }
-    };
-    checkConnection();
-  }, []);
+  // Status do WhatsApp já é gerenciado pelo hook useWhatsAppConnection
 
   // Tela de upgrade para plano Free
   if (isFreeplan) {
@@ -478,25 +470,25 @@ const DashboardPage: React.FC = () => {
         {/* Status do WhatsApp - Card destacado */}
         <div className="flex justify-center">
           <Card className={`p-4 border-2 ${
-            connectionStatus === 'online' ? 'border-green-200 bg-green-50' : 
-            connectionStatus === 'offline' ? 'border-red-200 bg-red-50' : 
+            whatsappStatus.status === 'connected' ? 'border-green-200 bg-green-50' : 
+            whatsappStatus.status === 'disconnected' ? 'border-red-200 bg-red-50' : 
             'border-yellow-200 bg-yellow-50'
           }`}>
             <div className="flex items-center justify-center gap-3">
-              {connectionStatus === 'checking' ? (
+              {whatsappStatus.status === 'connecting' ? (
                 <div className="w-5 h-5 animate-spin rounded-full border-2 border-yellow-600 border-t-transparent"></div>
-              ) : connectionStatus === 'online' ? (
+              ) : whatsappStatus.status === 'connected' ? (
                 <MessageCircle className="w-5 h-5 text-green-600" />
               ) : (
                 <MessageCircleOff className="w-5 h-5 text-red-600" />
               )}
               <span className={`font-medium ${
-                connectionStatus === 'online' ? 'text-green-700' : 
-                connectionStatus === 'offline' ? 'text-red-700' : 
+                whatsappStatus.status === 'connected' ? 'text-green-700' : 
+                whatsappStatus.status === 'disconnected' ? 'text-red-700' : 
                 'text-yellow-700'
               }`}>
-                WhatsApp {connectionStatus === 'checking' ? 'Verificando...' : 
-                         connectionStatus === 'online' ? 'Conectado' : 'Desconectado'}
+                WhatsApp {whatsappStatus.status === 'connecting' ? 'Conectando...' : 
+                         whatsappStatus.status === 'connected' ? 'Conectado' : 'Desconectado'}
               </span>
             </div>
           </Card>
